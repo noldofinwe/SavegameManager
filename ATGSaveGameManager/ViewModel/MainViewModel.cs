@@ -28,16 +28,23 @@ namespace ATGSaveGameManager.ViewModel
         public RelayCommand BackCommand { get; private set; }
         public RelayCommand SaveCommand { get; private set; }
         public RelayCommand SelectFileCommand { get; private set; }
+        public RelayCommand AddPlayerCommand { get; private set; }
 
         private FileSystemWatcher watcher;
         private int i = 0;
         private ConcurrentDictionary<string, FileInfoModel> files = new ConcurrentDictionary<string, FileInfoModel>();
         private ConcurrentDictionary<string, FileInfoModel> remoteFiles = new ConcurrentDictionary<string, FileInfoModel>();
+        private List<string> remoteGames = new List<string>();
         private DispatcherTimer timer;
         private string connection;
         private string directory;
         private string dataDirectory;
         private bool isCreatingNewGame;
+        private bool _isAvailable;
+        private string _newGameName;
+        private string _newGameFileName;
+        private string _newGameAddPlayer;
+        private string _lastSyncTime;
 
 
         private string _selectedName;
@@ -59,6 +66,102 @@ namespace ATGSaveGameManager.ViewModel
                 }
             }
         }
+
+
+        public bool IsAvailable
+        {
+            get
+            {
+                return _isAvailable;
+            }
+            set
+            {
+                if (_isAvailable != value)
+                {
+                    _isAvailable = value;
+                    RaisePropertyChanged(nameof(IsAvailable));
+                }
+            }
+        }
+
+        public string PlayerName
+        {
+            get
+            {
+                return _playerName;
+            }
+            set
+            {
+                if (_playerName != value)
+                {
+                    _playerName = value;
+                    RaisePropertyChanged(nameof(PlayerName));
+                }
+            }
+        }
+        public string LastSyncTime
+        {
+            get
+            {
+                return _lastSyncTime;
+            }
+            set
+            {
+                if (_lastSyncTime != value)
+                {
+                    _lastSyncTime = value;
+                    RaisePropertyChanged(nameof(LastSyncTime));
+                }
+            }
+        }
+
+        public string NewGameName
+        {
+            get
+            {
+                return _newGameName;
+            }
+            set
+            {
+                if (_newGameName != value)
+                {
+                    _newGameName = value;
+                    RaisePropertyChanged(nameof(NewGameName));
+                }
+            }
+        }
+
+        public string NewGameAddPlayer
+        {
+            get
+            {
+                return _newGameAddPlayer;
+            }
+            set
+            {
+                if (_newGameAddPlayer != value)
+                {
+                    _newGameAddPlayer = value;
+                    RaisePropertyChanged(nameof(NewGameAddPlayer));
+                }
+            }
+        }
+
+        public string NewGameFileName
+        {
+            get
+            {
+                return _newGameFileName;
+            }
+            set
+            {
+                if (_newGameFileName != value)
+                {
+                    _newGameFileName = value;
+                    RaisePropertyChanged(nameof(NewGameFileName));
+                }
+            }
+        }
         public MainViewModel()
         {
             IConfigurationBuilder builder = new ConfigurationBuilder()
@@ -72,15 +175,24 @@ namespace ATGSaveGameManager.ViewModel
             BackCommand = new RelayCommand(Back, null);
             SaveCommand = new RelayCommand(Save, null);
             SelectFileCommand = new RelayCommand(SelectFile, null);
+            AddPlayerCommand = new RelayCommand(AddPlayer, null);
             timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromSeconds(5);
             connection = _configuration.GetConnectionString("BlobStorageKey");
             directory = _configuration.GetValue<string>("Directory");
-            _playerName = _configuration.GetValue<string>("Player");
-            GameList = new ObservableCollection<FileInfoModel>();
-            dataDirectory = "\\data";
+            PlayerName = _configuration.GetValue<string>("Player");
+            GameList = new ObservableCollection<GameInfoModel>();
+            NewGamePlayers = new ObservableCollection<string>();
+            dataDirectory = AppDomain.CurrentDomain.BaseDirectory + "\\data";
 
             LoadGames();
+            IsAvailable = true;
+        }
+
+        private void AddPlayer()
+        {
+            NewGamePlayers.Add(NewGameAddPlayer);
+            NewGameAddPlayer = "";
         }
 
         private void SelectFile()
@@ -90,13 +202,23 @@ namespace ATGSaveGameManager.ViewModel
             openFileDialog.InitialDirectory = directory;
             if (openFileDialog.ShowDialog() == true)
             {
-                SelectedFile = openFileDialog.FileName;
+                NewGameFileName = openFileDialog.FileName;
             }
         }
 
         private void Save()
         {
-            //throw new NotImplementedException();
+            var gameinfo = new GameInfoModel
+            {
+                FileName = Path.GetFileName(NewGameFileName),
+                Name = NewGameName,
+                Players = NewGamePlayers.ToArray()
+            };
+            var jsonObject = JsonConvert.SerializeObject(gameinfo);
+
+            File.WriteAllText($"{dataDirectory}\\{NewGameName}.json", jsonObject);
+            IsCreatingNewGame = false;
+
         }
 
         private void Back()
@@ -106,23 +228,27 @@ namespace ATGSaveGameManager.ViewModel
 
         private void LoadGames()
         {
-            //Directory.CreateDirectory(dataDirectory);
-            //var fileList = Directory.GetFiles(dataDirectory);
-            //foreach (var file in fileList)
-            //{
-            //    var info = LoadJson(file);
-            //    GameList.Add(info);
-            //}
+            Directory.CreateDirectory(dataDirectory);
+            var fileList = Directory.GetFiles(dataDirectory);
+            foreach (var file in fileList)
+            {
+                var info = LoadJson(file);
+                if (files.ContainsKey(info.FileName))
+                {
+                    info.File = files[info.FileName];
+                }
+                GameList.Add(info);
+            }
         }
 
-        private ObservableCollection<FileInfoModel> _gameList;
-        public ObservableCollection<FileInfoModel> GameList
+        private ObservableCollection<GameInfoModel> _gameList;
+        public ObservableCollection<GameInfoModel> GameList
         {
             get
             {
                 if (_gameList == null)
                 {
-                    _gameList = new ObservableCollection<FileInfoModel>();
+                    _gameList = new ObservableCollection<GameInfoModel>();
                 }
                 return _gameList;
             }
@@ -132,6 +258,25 @@ namespace ATGSaveGameManager.ViewModel
                 RaisePropertyChanged("GameList");
             }
         }
+
+        private ObservableCollection<string> _newGamePlayers;
+        public ObservableCollection<string> NewGamePlayers
+        {
+            get
+            {
+                if (_newGamePlayers == null)
+                {
+                    _newGamePlayers = new ObservableCollection<string>();
+                }
+                return _newGamePlayers;
+            }
+            set
+            {
+                _newGamePlayers = value;
+                RaisePropertyChanged("NewGamePlayers");
+            }
+        }
+
 
         public string SelectedName
         {
@@ -180,6 +325,7 @@ namespace ATGSaveGameManager.ViewModel
 
         private void Start()
         {
+            IsAvailable = false;
             if (string.IsNullOrWhiteSpace(connection))
             {
                 MessageBox.Show("Error: Connection to Azure blob storage not filled in. Please add key to the appsettings.json file");
@@ -194,11 +340,31 @@ namespace ATGSaveGameManager.ViewModel
             files.Clear();
             remoteFiles.Clear();
             GameList.Clear();
+            remoteGames.Clear();
+            LoadGames();
             IndexLocally();
             CheckRemote();
+            DownloadNewGames();
+            GameList.Clear();
+            LoadGames();
             SyncDifferences();
-
+            GameList.Clear();
+            LoadGames();
             //CreateWatcher();
+            IsAvailable = true;
+            LastSyncTime = DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss");
+        }
+
+        private void DownloadNewGames()
+        {
+            var service = new BlobStorageService(connection);
+            foreach (var game in remoteGames)
+            {
+                if (!GameList.Any(p => p.FileName.Equals(game)))
+                {
+                    service.DownloadFile(game, $"{dataDirectory}\\{game}");
+                }
+            }
         }
 
         private void CreateWatcher()
@@ -227,6 +393,18 @@ namespace ATGSaveGameManager.ViewModel
             List<string> keys = remoteFiles.Keys.Union(files.Keys).ToList();
             foreach (string key in keys)
             {
+                var game = _gameList.FirstOrDefault(p => p.FileName == key);
+
+                if (game == null)
+                {
+                    continue;
+                }
+                var gameName = $"{game.Name}.json";
+                var gamePath = $"{dataDirectory}\\{gameName}";
+                var gameMd5 = GetFileHash(gamePath);
+
+                var gameStatus = GameStatus.DoNothing;
+
                 FileInfoModel remote = null;
                 FileInfoModel local = null;
 
@@ -243,9 +421,11 @@ namespace ATGSaveGameManager.ViewModel
                 if (remote == null)
                 {
                     var bytes = File.ReadAllBytes(local.FullPath);
+                    var bytesGame = File.ReadAllBytes(gamePath);
                     service.UploadFileToBlob(key, local.Md5, bytes, "application/zip");
                     files[key].FileStatus = FileStatus.Uploaded;
                     remoteFiles.TryAdd(key, local);
+                    gameStatus = GameStatus.Upload;
 
                 }
                 else if (local != null && remote.LastModified < local.LastModified && remote.Md5 != local.Md5)
@@ -254,6 +434,7 @@ namespace ATGSaveGameManager.ViewModel
                     service.UploadFileToBlob(key, local.Md5, bytes, "application/zip");
                     files[key].FileStatus = FileStatus.Uploaded;
                     remoteFiles[key] = local;
+                    gameStatus = GameStatus.Upload;
                 }
 
                 if (local == null)
@@ -261,33 +442,52 @@ namespace ATGSaveGameManager.ViewModel
                     var fileinfoModel = service.DownloadFile(key, $"{directory}\\{key}");
                     files.TryAdd(key, fileinfoModel);
                     files[key].FileStatus = FileStatus.New;
+                    gameStatus = GameStatus.Download;
                 }
                 else if (local == null || (remote != null && local.LastModified < remote.LastModified) && remote.Md5 != local.Md5)
                 {
                     var fileinfoModel = service.DownloadFile(key, $"{directory}\\{key}");
                     files[key] = fileinfoModel;
                     files[key].FileStatus = FileStatus.Downloaded;
+                    gameStatus = GameStatus.Download;
                 }
 
-                if(local?.Md5 == remote?.Md5)
+                if (local?.Md5 == remote?.Md5)
                 {
                     files[key].FileStatus = FileStatus.NotChanged;
                 }
-            }
 
-
-            foreach (var local in files)
-            {
-                GameList.Add(local.Value);
+                if (gameStatus == GameStatus.Download)
+                {
+                    service.DownloadFile(gameName, gamePath);
+                }
+                else if (gameStatus == GameStatus.Upload)
+                {
+                    game.LastPlayer = _playerName;
+                    var jsonObject = JsonConvert.SerializeObject(game);
+                    File.WriteAllText(gamePath, jsonObject);
+                    var hash = GetFileHash(gamePath);
+                    var bytes = File.ReadAllBytes(gamePath);
+                    service.UploadFileToBlob(gameName, hash, bytes, "application/json");
+                }
             }
-            RaisePropertyChanged("GameList");
         }
 
         private void CheckRemote()
         {
             var service = new BlobStorageService(connection);
-            remoteFiles = service.GetFiles();
-
+            var temp = service.GetFiles();
+            foreach (var file in temp)
+            {
+                if (file.Key.EndsWith(".json"))
+                {
+                    remoteGames.Add(file.Key);
+                }
+                else
+                {
+                    remoteFiles.TryAdd(file.Key, file.Value);
+                }
+            }
         }
 
         private void IndexLocally()

@@ -2,7 +2,7 @@
 This is a save game manager for Advanced tactics gold. What it does it syncs a (savegame) directory between you, Azure blob storage and any other players.
 
 ## How does it work?
-First of all you need an Azure blob storage:
+First of all you need an Azure blob storage (which is basically an online file storage):
 - https://docs.microsoft.com/nl-nl/azure/storage/blobs/storage-blob-create-account-block-blob?tabs=azure-portal
 
 Then you get the connection string and add this to your appsettings.json, in there you can select what directory to sync as well.
