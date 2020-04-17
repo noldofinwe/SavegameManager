@@ -21,3 +21,17 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --configuration Release --no-restore
+    - name: Zip Release
+      uses: TheDoctor0/zip-release@v0.3.0
+      with:
+        # Filename for archive
+        filename: release.zip
+        # Working directory before zipping
+        directory: \bin\Release\netcoreapp3.1
+    - name: Upload artifact
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        # Artifact name
+        name: SaveGameManager
+        # Directory containing files to upload
+        path: release.zip      
