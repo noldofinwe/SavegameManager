@@ -31,14 +31,14 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-            <Menu Grid.Column="0">
-                <MenuItem Header="_File">
+                <Menu Grid.Column="0">
+                    <MenuItem Header="_File">
                         <MenuItem Header="_New Game" Command="{Binding Path=NewGameCommand}" IsEnabled="{Binding IsAvailable}" />
-                    <Separator />
-                    <MenuItem Header="_Exit" />
-                </MenuItem>
-             
-            </Menu>
+                        <Separator />
+                        <MenuItem Header="_Exit" />
+                    </MenuItem>
+
+                </Menu>
                 <TextBlock Grid.Column="2" HorizontalAlignment="Right" Text="Player:" Margin="0,0,5,0" />
                 <TextBlock Grid.Column="3" HorizontalAlignment="Right" Text="{Binding PlayerName}" Margin="0,0,5,0" />
             </Grid>
@@ -51,28 +51,37 @@
                 <RowDefinition Height="*" />
                 <RowDefinition Height="30" />
             </Grid.RowDefinitions>
+            <!--<DataGrid ItemsSource="{Binding GameList}" IsReadOnly="True" AutoGenerateColumns="False" FrozenColumnCount="1">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn x:Name="IconHeader"  Header="" CanUserResize="False">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Image Source="{Binding IconImage}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>-->
 
-            <ListBox ItemsSource="{Binding GameList}"  Grid.Row="0" Grid.ColumnSpan="2">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Name: " />
-                                <TextBlock Text="{Binding Path=Name}"/>
-                            </StackPanel>
+            <ListView ItemsSource="{Binding GameList}" Grid.Row="0" Grid.ColumnSpan="2">
+                <ListView.View>
+                    <GridView AllowsColumnReorder="True">
+                        <GridViewColumn Width="32">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Image Source="{Binding IconImage}"  RenderOptions.BitmapScalingMode="Fant" Stretch="Fill" Width="24" Height="24" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Name" Width="150" DisplayMemberBinding="{Binding Name}" />
+                        <GridViewColumn Header="Sync status" Width="150" DisplayMemberBinding="{Binding File.FileStatus, Converter={StaticResource DefaultEnumToStringConverter}}" />
+                        <GridViewColumn Header="Current turn" Width="75" DisplayMemberBinding="{Binding CurrentTurn}" />
+                        <GridViewColumn Header="Current player" Width="150" DisplayMemberBinding="{Binding NextPlayer}" />
+                        <GridViewColumn Header="Last Turn" Width="200" DisplayMemberBinding="{Binding LastTurnTimeString}" />
+                    </GridView>
+                </ListView.View>
+            </ListView>
 
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Next Player: " />
-                                <TextBlock Text="{Binding NextPlayer}"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Sync status: " />
-                                <TextBlock Text="{Binding Path=File.FileStatus, Converter={StaticResource DefaultEnumToStringConverter}}"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2*" />
@@ -82,7 +91,7 @@
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Last Sync: " />
                     <TextBlock Text="{Binding LastSyncTime}" />
-                </StackPanel> 
+                </StackPanel>
                 <!--<Button Grid.Column="0" Content="Download" Command="{Binding Path=StartCommand}" Width="100" Margin="5" HorizontalAlignment="Left"></Button>
                 <Button Grid.Column="1" Content="Upload" Command="{Binding Path=StartCommand}" Width="100"  Margin="5" HorizontalAlignment="Center"></Button>-->
                 <Button Grid.Column="1" Content="Sync" Command="{Binding Path=StartCommand}" Width="100" Margin="5" HorizontalAlignment="Right" IsEnabled="{Binding IsAvailable}"></Button>
@@ -99,19 +108,23 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
 
                 <RowDefinition Height="30" />
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" Text="Game name" Margin="5" />
             <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding NewGameName}" Margin="5"/>
-            <TextBlock Grid.Row="1" Text="File" Margin="5" />
-            <TextBlock Grid.Row="1" Grid.Column="1"  Text="{Binding NewGameFileName}"  Margin="5"/>
-            <Button Grid.Row="1" Grid.Column="2" Content="SelectFile" Command="{Binding Path=SelectFileCommand}" Margin="5" />
-            <TextBlock Grid.Row="2" Grid.Column="0"  Text="Players"  Margin="5"/>
-            <TextBox Grid.Row="3" Grid.Column="0" Text="{Binding NewGameAddPlayer}" Margin="5"/>
-            <Button Grid.Row="3" Grid.Column="1" Content="Add" Command="{Binding Path=AddPlayerCommand}" Margin="5" />
-            <ListBox  Grid.Row="4" ItemsSource="{Binding NewGamePlayers}"  Grid.ColumnSpan="2">
+            <TextBlock Grid.Row="1" Text="Game Type" Margin="5" />
+            <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding GameTypes}" SelectedItem="{Binding NewGameGameType}" DisplayMemberPath="Name"  Margin="5"/>
+            <TextBlock Grid.Row="2" Text="File" Margin="5" />
+
+            <TextBlock Grid.Row="2" Grid.Column="1"  Text="{Binding NewGameFileName}"  Margin="5"/>
+            <Button Grid.Row="2" Grid.Column="2" Content="SelectFile" Command="{Binding Path=SelectFileCommand}" Margin="5" />
+            <TextBlock Grid.Row="3" Grid.Column="0"  Text="Players"  Margin="5"/>
+            <TextBox Grid.Row="4" Grid.Column="0" Text="{Binding NewGameAddPlayer}" Margin="5"/>
+            <Button Grid.Row="4" Grid.Column="1" Content="Add" Command="{Binding Path=AddPlayerCommand}" Margin="5" />
+            <ListBox  Grid.Row="5" ItemsSource="{Binding NewGamePlayers}"  Grid.ColumnSpan="2">
             </ListBox>
             <Button Grid.Column="0" Grid.Row="8" Content="Back" Command="{Binding Path=BackCommand}" Width="100" Margin="5" HorizontalAlignment="Left"></Button>
             <Button Grid.Column="2"  Grid.Row="8"  Content="Save" Command="{Binding Path=SaveCommand}" Width="100" Margin="5" HorizontalAlignment="Right"></Button>
