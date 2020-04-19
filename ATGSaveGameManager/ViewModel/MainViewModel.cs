@@ -437,7 +437,7 @@ namespace ATGSaveGameManager.ViewModel
             List<string> keys = remoteFiles.Keys.Union(files.Keys).ToList();
             foreach (string key in keys)
             {
-                var game = _gameList.FirstOrDefault(p => p.FileName == key);
+                var game = _gameList.FirstOrDefault(p => p.FileName == key && p.GameType == gameType.Extension);
 
                 if (game == null)
                 {
