@@ -23,7 +23,7 @@ namespace ATGSaveGameManager
         public DateTime LastTurnTime { get; set; }
 
         [JsonIgnore]
-        public string LastTurnTimeString => LastTurnTime.ToLocalTime().ToString("MM/dd/yyyy HH:mm:ss");
+        public string LastTurnTimeString => LastTurnTime.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss");
 
         public string GameType { get; set; }
 
