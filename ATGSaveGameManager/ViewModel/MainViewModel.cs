@@ -413,7 +413,7 @@ namespace ATGSaveGameManager.ViewModel
                 LoadGames();
             }
             IsAvailable = true;
-            LastSyncTime = DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss");
+            LastSyncTime = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
         }
 
         private void DownloadNewGames()
