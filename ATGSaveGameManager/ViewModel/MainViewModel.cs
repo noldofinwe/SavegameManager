@@ -198,7 +198,7 @@ namespace ATGSaveGameManager.ViewModel
             connection = _configuration.GetConnectionString("BlobStorageKey");
             PlayerName = _configuration.GetValue<string>("Player");
 
-            GameList = new ObservableCollection<GameInfoModel>();
+            GameList = new ObservableCollection<GameInfoViewModel>();
             NewGamePlayers = new ObservableCollection<string>();
             dataDirectory = AppDomain.CurrentDomain.BaseDirectory + "\\data";
 
@@ -264,21 +264,21 @@ namespace ATGSaveGameManager.ViewModel
             foreach (var file in fileList)
             {
                 var info = LoadJson(file);
-            
 
                 var gameType = GameTypes.FirstOrDefault(p => p.Extension == info.GameType);
+                var gameInfoViewModel = new GameInfoViewModel(info, _playerName);
 
                 if (gameType != null)
                 {
-                    info.GameTypeObject = gameType;
-                    info.IconImage = new BitmapImage(new Uri(gameType.Icon, UriKind.RelativeOrAbsolute));
+                    gameInfoViewModel.GameTypeObject = gameType;
+                    gameInfoViewModel.IconImage = new BitmapImage(new Uri(gameType.Icon, UriKind.RelativeOrAbsolute));
                 }
                 if (files.ContainsKey(info.FileName))
                 {
-                    info.File = files[info.FileName];
+                    gameInfoViewModel.File = files[info.FileName];
                 }
                
-                GameList.Add(info);
+                GameList.Add(gameInfoViewModel);
             }
 
         }
@@ -303,14 +303,14 @@ namespace ATGSaveGameManager.ViewModel
         }
 
 
-        private ObservableCollection<GameInfoModel> _gameList;
-        public ObservableCollection<GameInfoModel> GameList
+        private ObservableCollection<GameInfoViewModel> _gameList;
+        public ObservableCollection<GameInfoViewModel> GameList
         {
             get
             {
                 if (_gameList == null)
                 {
-                    _gameList = new ObservableCollection<GameInfoModel>();
+                    _gameList = new ObservableCollection<GameInfoViewModel>();
                 }
                 return _gameList;
             }
@@ -421,7 +421,7 @@ namespace ATGSaveGameManager.ViewModel
             var service = new BlobStorageService(connection);
             foreach (var game in remoteGames)
             {
-                if (!GameList.Any(p => p.FileName.Equals(game)))
+                if (!GameList.Any(p => p.Model.FileName.Equals(game)))
                 {
                     service.DownloadFile(game, $"{dataDirectory}\\{game}");
                 }
@@ -437,12 +437,19 @@ namespace ATGSaveGameManager.ViewModel
             List<string> keys = remoteFiles.Keys.Union(files.Keys).ToList();
             foreach (string key in keys)
             {
-                var game = _gameList.FirstOrDefault(p => p.FileName == key && p.GameType == gameType.Extension);
+                var gameViewModel = _gameList.FirstOrDefault(p => p.Model.FileName == key && p.Model.GameType == gameType.Extension);
 
-                if (game == null)
+                if (gameViewModel == null)
                 {
                     continue;
                 }
+                var game = gameViewModel.Model;
+
+                if (!game.Players.Contains(_playerName))
+                {
+                    continue;
+                }
+
                 var gameName = $"{game.Name}.json";
                 var gamePath = $"{dataDirectory}\\{gameName}";
                 var gameMd5 = GetFileHash(gamePath);

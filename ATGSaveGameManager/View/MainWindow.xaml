@@ -73,13 +73,29 @@
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
-                        <GridViewColumn Header="Name" Width="150" DisplayMemberBinding="{Binding Name}" />
-                        <GridViewColumn Header="Sync status" Width="150" DisplayMemberBinding="{Binding File.FileStatus, Converter={StaticResource DefaultEnumToStringConverter}}" />
-                        <GridViewColumn Header="Current turn" Width="75" DisplayMemberBinding="{Binding CurrentTurn}" />
-                        <GridViewColumn Header="Current player" Width="150" DisplayMemberBinding="{Binding NextPlayer}" />
+                        <GridViewColumn Header="Name" Width="150" DisplayMemberBinding="{Binding Model.Name}" />
+                        <GridViewColumn Header="Sync status" Width="125" DisplayMemberBinding="{Binding File.FileStatus, Converter={StaticResource DefaultEnumToStringConverter}}" />
+                        <GridViewColumn Header="Current turn" Width="75" DisplayMemberBinding="{Binding Model.CurrentTurn}" />
+                        <GridViewColumn Header="Current player" Width="100" DisplayMemberBinding="{Binding NextPlayer}" />
                         <GridViewColumn Header="Last Turn" Width="200" DisplayMemberBinding="{Binding LastTurnTimeString}" />
+                        <GridViewColumn Width="48" Header="Player">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsPlayer, Mode=OneWay}"  IsEnabled="false"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
                     </GridView>
                 </ListView.View>
+                <ListView.Resources>
+                    <Style TargetType="{x:Type ListViewItem}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsYourTurn}"  Value="true">
+                                <Setter Property="Background"  Value="LightGreen" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListView.Resources>
             </ListView>
 
             <Grid Grid.Row="1">
