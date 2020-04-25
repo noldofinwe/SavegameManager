@@ -105,11 +105,15 @@ namespace ATGSaveGameManager.ViewModel
             CancelAdd();
             SelectedPlayerName = appSettings.Player;
             SelectedConnection = appSettings.ConnectionStrings.BlobStorageKey;
+            SelectedConnection = appSettings.ConnectionStrings?.BlobStorageKey;
 
-            foreach (var type in appSettings.GamesTypes)
+            if (appSettings.GamesTypes != null)
             {
-                var viewModel = new GameTypeViewModel(type);
-                GameTypes.Add(viewModel);
+                foreach (var type in appSettings.GamesTypes)
+                {
+                    var viewModel = new GameTypeViewModel(type);
+                    GameTypes.Add(viewModel);
+                }
             }
         }
 

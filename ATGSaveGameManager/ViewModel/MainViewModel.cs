@@ -71,10 +71,17 @@ namespace ATGSaveGameManager.ViewModel
 
         private void ReadAppSettings()
         {
-            using (StreamReader r = new StreamReader(_appsettingsName))
+            if (File.Exists(_appsettingsName))
             {
-                string json = r.ReadToEnd();
-                _appSettings = JsonConvert.DeserializeObject<AppSettings>(json);
+                using (StreamReader r = new StreamReader(_appsettingsName))
+                {
+                    string json = r.ReadToEnd();
+                    _appSettings = JsonConvert.DeserializeObject<AppSettings>(json);
+                }
+            }
+            else
+            {
+                _appSettings = new AppSettings();
             }
         }
 
