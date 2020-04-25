@@ -45,8 +45,7 @@ namespace ATGSaveGameManager.ViewModel
             var jsonObject = JsonConvert.SerializeObject(gameinfo);
 
             File.WriteAllText($"{_mainViewModel.DataDirectory}\\{NewGameName}.json", jsonObject);
-            _mainViewModel.IsCreatingNewGame = false;
-            _mainViewModel.LoadGames();
+            _mainViewModel.AddedNewGame();
 
         }
 
