@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:viewModels="clr-namespace:ATGSaveGameManager.ViewModel"
-        xmlns:my="clr-namespace:ATGSaveGameManager"
+        xmlns:my="clr-namespace:ATGSaveGameManager" xmlns:view="clr-namespace:ATGSaveGameManager.View"
         mc:Ignorable="d"
         Title="Save game Manager" Height="450" Width="800">
     <Window.DataContext>
@@ -34,6 +34,7 @@
                 <Menu Grid.Column="0">
                     <MenuItem Header="_File">
                         <MenuItem Header="_New Game" Command="{Binding Path=NewGameCommand}" IsEnabled="{Binding IsAvailable}" />
+                        <MenuItem Header="_Settings" Command="{Binding Path=OpenSettingsCommand}" IsEnabled="{Binding IsAvailable}" />
                         <Separator />
                         <MenuItem Header="_Exit" />
                     </MenuItem>
@@ -43,107 +44,19 @@
                 <TextBlock Grid.Column="3" HorizontalAlignment="Right" Text="{Binding PlayerName}" Margin="0,0,5,0" />
             </Grid>
         </DockPanel>
-        <Grid  Grid.Row="1" Grid.ColumnSpan="2" Visibility="{Binding IsCreatingNewGame, Converter={StaticResource InvertedBooleanToVisibityConverter}}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
-                <RowDefinition Height="30" />
-            </Grid.RowDefinitions>
-            <!--<DataGrid ItemsSource="{Binding GameList}" IsReadOnly="True" AutoGenerateColumns="False" FrozenColumnCount="1">
-                <DataGrid.Columns>
-                    <DataGridTemplateColumn x:Name="IconHeader"  Header="" CanUserResize="False">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <Image Source="{Binding IconImage}" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
-            </DataGrid>-->
 
-            <ListView ItemsSource="{Binding GameList}" Grid.Row="0" Grid.ColumnSpan="2">
-                <ListView.View>
-                    <GridView AllowsColumnReorder="True">
-                        <GridViewColumn Width="32">
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Image Source="{Binding IconImage}"  RenderOptions.BitmapScalingMode="Fant" Stretch="Fill" Width="24" Height="24" />
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                        <GridViewColumn Header="Name" Width="150" DisplayMemberBinding="{Binding Model.Name}" />
-                        <GridViewColumn Header="Sync status" Width="125" DisplayMemberBinding="{Binding File.FileStatus, Converter={StaticResource DefaultEnumToStringConverter}}" />
-                        <GridViewColumn Header="Current turn" Width="75" DisplayMemberBinding="{Binding Model.CurrentTurn}" />
-                        <GridViewColumn Header="Current player" Width="100" DisplayMemberBinding="{Binding NextPlayer}" />
-                        <GridViewColumn Header="Last Turn" Width="200" DisplayMemberBinding="{Binding LastTurnTimeString}" />
-                        <GridViewColumn Width="48" Header="Player">
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <CheckBox IsChecked="{Binding IsPlayer, Mode=OneWay}"  IsEnabled="false"/>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                    </GridView>
-                </ListView.View>
-                <ListView.Resources>
-                    <Style TargetType="{x:Type ListViewItem}">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsYourTurn}"  Value="true">
-                                <Setter Property="Background"  Value="LightGreen" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </ListView.Resources>
-            </ListView>
 
-            <Grid Grid.Row="1">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+        <Grid  Grid.Row="1" Grid.ColumnSpan="2">
 
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Last Sync: " />
-                    <TextBlock Text="{Binding LastSyncTime}" />
-                </StackPanel>
-                <!--<Button Grid.Column="0" Content="Download" Command="{Binding Path=StartCommand}" Width="100" Margin="5" HorizontalAlignment="Left"></Button>
-                <Button Grid.Column="1" Content="Upload" Command="{Binding Path=StartCommand}" Width="100"  Margin="5" HorizontalAlignment="Center"></Button>-->
-                <Button Grid.Column="1" Content="Sync" Command="{Binding Path=StartCommand}" Width="100" Margin="5" HorizontalAlignment="Right" IsEnabled="{Binding IsAvailable}"></Button>
+            <Grid Visibility="{Binding GameOverviewVisible, Converter={StaticResource BooleanToVisibilityConverter}}" >
+                <view:GameOverviewView DataContext="{Binding GameOverviewViewModel}" />
             </Grid>
-        </Grid>
-        <Grid  Grid.Row="1" Grid.ColumnSpan="2" Visibility="{Binding IsCreatingNewGame, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-
-                <RowDefinition Height="30" />
-            </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" Text="Game name" Margin="5" />
-            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding NewGameName}" Margin="5"/>
-            <TextBlock Grid.Row="1" Text="Game Type" Margin="5" />
-            <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding GameTypes}" SelectedItem="{Binding NewGameGameType}" DisplayMemberPath="Name"  Margin="5"/>
-            <TextBlock Grid.Row="2" Text="File" Margin="5" />
-
-            <TextBlock Grid.Row="2" Grid.Column="1"  Text="{Binding NewGameFileName}"  Margin="5"/>
-            <Button Grid.Row="2" Grid.Column="2" Content="SelectFile" Command="{Binding Path=SelectFileCommand}" Margin="5" />
-            <TextBlock Grid.Row="3" Grid.Column="0"  Text="Players"  Margin="5"/>
-            <TextBox Grid.Row="4" Grid.Column="0" Text="{Binding NewGameAddPlayer}" Margin="5"/>
-            <Button Grid.Row="4" Grid.Column="1" Content="Add" Command="{Binding Path=AddPlayerCommand}" Margin="5" />
-            <ListBox  Grid.Row="5" ItemsSource="{Binding NewGamePlayers}"  Grid.ColumnSpan="2">
-            </ListBox>
-            <Button Grid.Column="0" Grid.Row="8" Content="Back" Command="{Binding Path=BackCommand}" Width="100" Margin="5" HorizontalAlignment="Left"></Button>
-            <Button Grid.Column="2"  Grid.Row="8"  Content="Save" Command="{Binding Path=SaveCommand}" Width="100" Margin="5" HorizontalAlignment="Right"></Button>
+            <Grid Visibility="{Binding NewGameCreatingVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <view:NewGameView DataContext="{Binding NewGameViewModel}" />
+            </Grid>
+            <Grid Visibility="{Binding IsSetup, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <view:SetupView  DataContext="{Binding SetupViewModel}" />
+            </Grid>
         </Grid>
     </Grid>
 </Window>

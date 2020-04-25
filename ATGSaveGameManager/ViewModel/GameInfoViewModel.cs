@@ -1,12 +1,9 @@
 ﻿using GalaSoft.MvvmLight;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
 using System.Windows.Media.Imaging;
 
-namespace ATGSaveGameManager
+namespace ATGSaveGameManager.ViewModel
 {
     public class GameInfoViewModel : ViewModelBase
     {
@@ -61,7 +58,6 @@ namespace ATGSaveGameManager
 
         private BitmapImage _iconImage;
 
-        [JsonIgnore]
         public BitmapImage IconImage
         {
             get
@@ -78,7 +74,6 @@ namespace ATGSaveGameManager
             }
         }
 
-        [JsonIgnore]
         public GameType GameTypeObject
         {
             get
@@ -101,7 +96,6 @@ namespace ATGSaveGameManager
         public bool IsPlayer => Model.Players.Contains(_player);
         public bool IsYourTurn => NextPlayer.Equals(_player);
 
-        [JsonIgnore]
         public FileInfoModel File { get; set; }
 
     }

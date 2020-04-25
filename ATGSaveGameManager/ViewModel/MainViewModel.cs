@@ -1,68 +1,188 @@
-﻿using ATGSaveGameManager.Azure;
+﻿using ATGSaveGameManager.Configuration;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Win32;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Data;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media.Imaging;
-using System.Windows.Threading;
 
 namespace ATGSaveGameManager.ViewModel
 {
     public class MainViewModel : ViewModelBase
     {
-        private readonly IConfiguration _configuration;
-        public RelayCommand StartCommand { get; private set; }
+        private AppSettings _appSettings;
         public RelayCommand NewGameCommand { get; private set; }
-        public RelayCommand BackCommand { get; private set; }
-        public RelayCommand SaveCommand { get; private set; }
-        public RelayCommand SelectFileCommand { get; private set; }
-        public RelayCommand AddPlayerCommand { get; private set; }
+        public RelayCommand OpenSettingsCommand { get; private set; }
 
-        private ConcurrentDictionary<string, FileInfoModel> files = new ConcurrentDictionary<string, FileInfoModel>();
-        private ConcurrentDictionary<string, FileInfoModel> remoteFiles = new ConcurrentDictionary<string, FileInfoModel>();
-        private List<string> remoteGames = new List<string>();
-        private string connection;
-        private string dataDirectory;
-        private bool isCreatingNewGame;
+        private string _connection;
+        private string _dataDirectory;
+        private bool _isCreatingNewGame;
         private bool _isAvailable;
-        private string _newGameName;
-        private string _newGameFileName;
-        private string _newGameAddPlayer;
-        private GameType _newGameGameType;
-        private string _lastSyncTime;
-
-
-        private string _selectedName;
-        private string _selectedFile;
+        private bool _isSetup;
         private string _playerName;
+        private GameOverviewViewModel _gameOverviewViewModel;
+        private NewGameViewModel _newGameViewModel;
+        private SetupViewModel _setupViewModel;
+        private ObservableCollection<GameType> _gameTypes;
+        private const string _appsettingsName = "appsettings.json";
+        public MainViewModel()
+        {
+            NewGameCommand = new RelayCommand(NewGame, null);
+            OpenSettingsCommand = new RelayCommand(OpenSettings, null);
+            DataDirectory = AppDomain.CurrentDomain.BaseDirectory + "\\data";
+            IsAvailable = true;
+            IsCreatingNewGame = false;
+
+            GameOverviewViewModel = new GameOverviewViewModel(this);
+            NewGameViewModel = new NewGameViewModel(this);
+            SetupViewModel = new SetupViewModel(this);
+
+            LoadAppSettings();
+        }
+
+        private void OpenSettings()
+        {
+            SetupViewModel.SetCurrentSettings(_appSettings);
+            IsSetup = true;
+        }
+
+        internal void AddedNewGame()
+        {
+            IsCreatingNewGame = false;
+            GameOverviewViewModel.LoadGames();
+        }
+
+        private void LoadAppSettings()
+        {
+            ReadAppSettings();
+
+            Connection = _appSettings.ConnectionStrings.BlobStorageKey;
+            PlayerName = _appSettings.Player;
+
+            GetGameTypes();
+
+            CheckSettings();
+
+            SetupViewModel.SetCurrentSettings(_appSettings);
+            GameOverviewViewModel.LoadGames();
+        }
+
+        private void ReadAppSettings()
+        {
+            using (StreamReader r = new StreamReader(_appsettingsName))
+            {
+                string json = r.ReadToEnd();
+                _appSettings = JsonConvert.DeserializeObject<AppSettings>(json);
+            }
+        }
+
+        public void NewGame()
+        {
+            IsCreatingNewGame = true;
+        }
+
+        private void CheckSettings()
+        {
+            if (string.IsNullOrWhiteSpace(PlayerName) || string.IsNullOrWhiteSpace(_connection) || GameTypes.Count == 0)
+            {
+                IsSetup = true;
+            }
+            else
+            {
+                IsSetup = false;
+            }
+        }
+
+        public GameOverviewViewModel GameOverviewViewModel
+        {
+            get
+            {
+                return _gameOverviewViewModel;
+            }
+            set
+            {
+                if (_gameOverviewViewModel != value)
+                {
+                    _gameOverviewViewModel = value;
+                    RaisePropertyChanged(nameof(GameOverviewViewModel));
+                }
+            }
+        }
+
+        public bool GameOverviewVisible => !IsSetup && !IsCreatingNewGame;
+        public bool NewGameCreatingVisible => !IsSetup && IsCreatingNewGame;
+
+
+        public NewGameViewModel NewGameViewModel
+        {
+            get
+            {
+                return _newGameViewModel;
+            }
+            set
+            {
+                if (_newGameViewModel != value)
+                {
+                    _newGameViewModel = value;
+                    RaisePropertyChanged(nameof(NewGameViewModel));
+                }
+            }
+        }
+
+
+        public SetupViewModel SetupViewModel
+        {
+            get
+            {
+                return _setupViewModel;
+            }
+            set
+            {
+                if (_setupViewModel != value)
+                {
+                    _setupViewModel = value;
+                    RaisePropertyChanged(nameof(SetupViewModel));
+                }
+            }
+        }
+
+
+        public bool IsSetup
+        {
+            get
+            {
+                return _isSetup;
+            }
+            set
+            {
+                if (_isSetup != value)
+                {
+                    _isSetup = value;
+                    RaisePropertyChanged(nameof(IsSetup));
+                    RaisePropertyChanged(nameof(GameOverviewVisible));
+                    RaisePropertyChanged(nameof(NewGameCreatingVisible));
+                }
+            }
+        }
+
+
 
         public bool IsCreatingNewGame
         {
             get
             {
-                return isCreatingNewGame;
+                return _isCreatingNewGame;
             }
             set
             {
-                if (isCreatingNewGame != value)
+                if (_isCreatingNewGame != value)
                 {
-                    isCreatingNewGame = value;
+                    _isCreatingNewGame = value;
                     RaisePropertyChanged(nameof(IsCreatingNewGame));
+                    RaisePropertyChanged(nameof(GameOverviewVisible));
+                    RaisePropertyChanged(nameof(NewGameCreatingVisible));
                 }
             }
         }
@@ -100,191 +220,34 @@ namespace ATGSaveGameManager.ViewModel
             }
         }
 
-        public GameType NewGameGameType
-        {
-            get
-            {
-                return _newGameGameType;
-            }
-            set
-            {
-                if (_newGameGameType != value)
-                {
-                    _newGameGameType = value;
-                    RaisePropertyChanged(nameof(NewGameGameType));
-                }
-            }
-        }
-
-        public string LastSyncTime
-        {
-            get
-            {
-                return _lastSyncTime;
-            }
-            set
-            {
-                if (_lastSyncTime != value)
-                {
-                    _lastSyncTime = value;
-                    RaisePropertyChanged(nameof(LastSyncTime));
-                }
-            }
-        }
-
-        public string NewGameName
-        {
-            get
-            {
-                return _newGameName;
-            }
-            set
-            {
-                if (_newGameName != value)
-                {
-                    _newGameName = value;
-                    RaisePropertyChanged(nameof(NewGameName));
-                }
-            }
-        }
-
-        public string NewGameAddPlayer
-        {
-            get
-            {
-                return _newGameAddPlayer;
-            }
-            set
-            {
-                if (_newGameAddPlayer != value)
-                {
-                    _newGameAddPlayer = value;
-                    RaisePropertyChanged(nameof(NewGameAddPlayer));
-                }
-            }
-        }
-
-        public string NewGameFileName
-        {
-            get
-            {
-                return _newGameFileName;
-            }
-            set
-            {
-                if (_newGameFileName != value)
-                {
-                    _newGameFileName = value;
-                    RaisePropertyChanged(nameof(NewGameFileName));
-                }
-            }
-        }
-        public MainViewModel()
-        {
-            IConfigurationBuilder builder = new ConfigurationBuilder()
-                        .SetBasePath(Directory.GetCurrentDirectory())
-                        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-
-            _configuration = builder.Build();
-
-            GetGameTypes();
-
-            StartCommand = new RelayCommand(Start, null);
-            NewGameCommand = new RelayCommand(NewGame, null);
-            BackCommand = new RelayCommand(Back, null);
-            SaveCommand = new RelayCommand(Save, null);
-            SelectFileCommand = new RelayCommand(SelectFile, null);
-            AddPlayerCommand = new RelayCommand(AddPlayer, null);
-            connection = _configuration.GetConnectionString("BlobStorageKey");
-            PlayerName = _configuration.GetValue<string>("Player");
-
-            GameList = new ObservableCollection<GameInfoViewModel>();
-            NewGamePlayers = new ObservableCollection<string>();
-            dataDirectory = AppDomain.CurrentDomain.BaseDirectory + "\\data";
-
-            LoadGames();
-            IsAvailable = true;
-        }
 
         private void GetGameTypes()
         {
-            _configuration.GetSection("GamesTypes").Bind(GameTypes);
+            //for_appSettings.GameTypes;
+            foreach (var gametype in _appSettings.GamesTypes)
+            {
+                GameTypes.Add(gametype);
+            }
             RaisePropertyChanged(nameof(GameTypes));
         }
 
-        private void AddPlayer()
+        public void UpdateAppsettings(string selectedPlayerName, string selectedConnection, IEnumerable<GameType> gameTypes)
         {
-            NewGamePlayers.Add(NewGameAddPlayer);
-            NewGameAddPlayer = "";
-        }
+            _appSettings.Player = selectedPlayerName;
+            _appSettings.ConnectionStrings.BlobStorageKey = selectedConnection;
+            _appSettings.GamesTypes = gameTypes.ToArray();
 
-        private void SelectFile()
-        {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Save files (*.at2)|*.at2|All files (*.*)|*.*";
-            if (NewGameGameType != null)
+            using (var file = File.CreateText(_appsettingsName))
             {
-                openFileDialog.InitialDirectory = NewGameGameType.Savegames;
-            }
-            else
-            {
-                openFileDialog.InitialDirectory = GameTypes.First().Savegames;
-            }
-            if (openFileDialog.ShowDialog() == true)
-            {
-                NewGameFileName = openFileDialog.FileName;
-            }
-        }
-
-        private void Save()
-        {
-            var gameinfo = new GameInfoModel
-            {
-                FileName = Path.GetFileName(NewGameFileName),
-                GameType = NewGameGameType.Extension,
-                Name = NewGameName,
-                Players = NewGamePlayers.ToArray()
-            };
-            var jsonObject = JsonConvert.SerializeObject(gameinfo);
-
-            File.WriteAllText($"{dataDirectory}\\{NewGameName}.json", jsonObject);
-            IsCreatingNewGame = false;
-
-        }
-
-        private void Back()
-        {
-            IsCreatingNewGame = false;
-        }
-
-        private void LoadGames()
-        {
-            Directory.CreateDirectory(dataDirectory);
-            var fileList = Directory.GetFiles(dataDirectory);
-            foreach (var file in fileList)
-            {
-                var info = LoadJson(file);
-
-                var gameType = GameTypes.FirstOrDefault(p => p.Extension == info.GameType);
-                var gameInfoViewModel = new GameInfoViewModel(info, _playerName);
-
-                if (gameType != null)
-                {
-                    gameInfoViewModel.GameTypeObject = gameType;
-                    gameInfoViewModel.IconImage = new BitmapImage(new Uri(gameType.Icon, UriKind.RelativeOrAbsolute));
-                }
-                if (files.ContainsKey(info.FileName))
-                {
-                    gameInfoViewModel.File = files[info.FileName];
-                }
-               
-                GameList.Add(gameInfoViewModel);
+                var serializer = new JsonSerializer();
+                serializer.Formatting = Formatting.Indented;
+                serializer.Serialize(file, _appSettings);
             }
 
+            // Reload settings
+            LoadAppSettings();
         }
 
-
-        private ObservableCollection<GameType> _gameTypes;
         public ObservableCollection<GameType> GameTypes
         {
             get
@@ -298,289 +261,42 @@ namespace ATGSaveGameManager.ViewModel
             set
             {
                 _gameTypes = value;
-                RaisePropertyChanged("GameTypes");
+                RaisePropertyChanged(nameof(GameTypes));
             }
         }
 
-
-        private ObservableCollection<GameInfoViewModel> _gameList;
-        public ObservableCollection<GameInfoViewModel> GameList
+        public string Connection
         {
             get
             {
-                if (_gameList == null)
-                {
-                    _gameList = new ObservableCollection<GameInfoViewModel>();
-                }
-                return _gameList;
+                return _connection;
             }
             set
             {
-                _gameList = value;
-                RaisePropertyChanged("GameList");
+                if (_connection != value)
+                {
+                    _connection = value;
+                    RaisePropertyChanged(nameof(Connection));
+                }
             }
         }
 
-        private ObservableCollection<string> _newGamePlayers;
-        public ObservableCollection<string> NewGamePlayers
+        public string DataDirectory
         {
             get
             {
-                if (_newGamePlayers == null)
-                {
-                    _newGamePlayers = new ObservableCollection<string>();
-                }
-                return _newGamePlayers;
+                return _dataDirectory;
             }
             set
             {
-                _newGamePlayers = value;
-                RaisePropertyChanged("NewGamePlayers");
-            }
-        }
-
-
-        public string SelectedName
-        {
-            get
-            {
-                return _selectedName;
-            }
-            set
-            {
-                if (_selectedName != value)
+                if (_dataDirectory != value)
                 {
-                    _selectedName = value;
-                    RaisePropertyChanged("SelectedName");
-                }
-            }
-        }
-
-        public string SelectedFile
-        {
-            get
-            {
-                return _selectedFile;
-            }
-            set
-            {
-                if (_selectedFile != value)
-                {
-                    _selectedFile = value;
-                    RaisePropertyChanged("SelectedFile");
-                }
-            }
-        }
-        private void NewGame()
-        {
-            IsCreatingNewGame = true;
-        }
-
-        public GameInfoModel LoadJson(string file)
-        {
-            using (StreamReader r = new StreamReader(file))
-            {
-                string json = r.ReadToEnd();
-                return JsonConvert.DeserializeObject<GameInfoModel>(json);
-            }
-        }
-
-        private void Start()
-        {
-            IsAvailable = false;
-            if (string.IsNullOrWhiteSpace(connection))
-            {
-                MessageBox.Show("Error: Connection to Azure blob storage not filled in. Please add key to the appsettings.json file");
-                return;
-            }
-
-            files.Clear();
-            remoteFiles.Clear();
-            GameList.Clear();
-            remoteGames.Clear();
-
-            LoadGames();
-            CheckRemote();
-            DownloadNewGames();
-            GameList.Clear();
-            LoadGames();
-            foreach (var gameType in GameTypes)
-            {
-
-                IndexLocally(gameType.Savegames);
-                SyncDifferences(gameType);
-                GameList.Clear();
-                LoadGames();
-            }
-            IsAvailable = true;
-            LastSyncTime = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
-        }
-
-        private void DownloadNewGames()
-        {
-            var service = new BlobStorageService(connection);
-            foreach (var game in remoteGames)
-            {
-                if (!GameList.Any(p => p.Model.FileName.Equals(game)))
-                {
-                    service.DownloadFile(game, $"{dataDirectory}\\{game}");
+                    _dataDirectory = value;
+                    RaisePropertyChanged(nameof(DataDirectory));
                 }
             }
         }
 
 
-        private void SyncDifferences(GameType gameType)
-        {
-            var service = new BlobStorageService(connection);
-
-
-            List<string> keys = remoteFiles.Keys.Union(files.Keys).ToList();
-            foreach (string key in keys)
-            {
-                var gameViewModel = _gameList.FirstOrDefault(p => p.Model.FileName == key && p.Model.GameType == gameType.Extension);
-
-                if (gameViewModel == null)
-                {
-                    continue;
-                }
-                var game = gameViewModel.Model;
-
-                if (!game.Players.Contains(_playerName))
-                {
-                    continue;
-                }
-
-                var gameName = $"{game.Name}.json";
-                var gamePath = $"{dataDirectory}\\{gameName}";
-                var gameMd5 = GetFileHash(gamePath);
-
-                var gameStatus = GameStatus.DoNothing;
-
-                FileInfoModel remote = null;
-                FileInfoModel local = null;
-
-                if (remoteFiles.ContainsKey(key))
-                {
-                    remote = remoteFiles[key];
-                }
-
-                if (files.ContainsKey(key))
-                {
-                    local = files[key];
-                }
-
-                if (remote == null)
-                {
-                    var bytes = File.ReadAllBytes(local.FullPath);
-                    var bytesGame = File.ReadAllBytes(gamePath);
-                    service.UploadFileToBlob(key, local.Md5, bytes, "application/zip");
-                    files[key].FileStatus = FileStatus.Uploaded;
-                    remoteFiles.TryAdd(key, local);
-                    gameStatus = GameStatus.Upload;
-
-                }
-                else if (local != null && remote.LastModified < local.LastModified && remote.Md5 != local.Md5)
-                {
-                    var bytes = File.ReadAllBytes(local.FullPath);
-                    service.UploadFileToBlob(key, local.Md5, bytes, "application/zip");
-                    files[key].FileStatus = FileStatus.Uploaded;
-                    remoteFiles[key] = local;
-                    gameStatus = GameStatus.Upload;
-                }
-
-                if (local == null)
-                {
-                    var fileinfoModel = service.DownloadFile(key, $"{gameType.Savegames}\\{key}");
-                    files.TryAdd(key, fileinfoModel);
-                    files[key].FileStatus = FileStatus.New;
-                    gameStatus = GameStatus.Download;
-                }
-                else if (local == null || (remote != null && local.LastModified < remote.LastModified) && remote.Md5 != local.Md5)
-                {
-                    var fileinfoModel = service.DownloadFile(key, $"{gameType.Savegames}\\{key}");
-                    files[key] = fileinfoModel;
-                    files[key].FileStatus = FileStatus.Downloaded;
-                    gameStatus = GameStatus.Download;
-                }
-
-                if (local?.Md5 == remote?.Md5)
-                {
-                    files[key].FileStatus = FileStatus.NotChanged;
-                }
-
-                if (gameStatus == GameStatus.Download)
-                {
-                    service.DownloadFile(gameName, gamePath);
-                }
-                else if (gameStatus == GameStatus.Upload)
-                {
-                    game.LastPlayer = _playerName;
-                    game.GameType = gameType.Extension;
-                    game.LastTurnTime = DateTime.UtcNow;
-                    if(game.CurrentTurn.HasValue)
-                    {
-                        if(game.Players[0].Equals(_playerName))
-                        {
-                            game.CurrentTurn++;
-                        }
-                    }
-                    else
-                    {
-                        game.CurrentTurn = 1;
-                    }
-                    var jsonObject = JsonConvert.SerializeObject(game);
-                    File.WriteAllText(gamePath, jsonObject);
-                    var hash = GetFileHash(gamePath);
-                    var bytes = File.ReadAllBytes(gamePath);
-                    service.UploadFileToBlob(gameName, hash, bytes, "application/json");
-                }
-            }
-        }
-
-        private void CheckRemote()
-        {
-            var service = new BlobStorageService(connection);
-            var temp = service.GetFiles();
-            foreach (var file in temp)
-            {
-                if (file.Key.EndsWith(".json"))
-                {
-                    remoteGames.Add(file.Key);
-                }
-                else
-                {
-                    remoteFiles.TryAdd(file.Key, file.Value);
-                }
-            }
-        }
-
-        private void IndexLocally(string directory)
-        {
-            var fileList = Directory.GetFiles(directory);
-            foreach (var file in fileList)
-            {
-                var info = new FileInfo(file);
-                var fileInfoModel = new FileInfoModel
-                {
-                    FullPath = file,
-                    Name = info.Name,
-                    LastModified = info.LastWriteTimeUtc,
-                    Md5 = GetFileHash(file)
-                };
-                files.TryAdd(info.Name, fileInfoModel);
-            }
-        }
-
-        private string GetFileHash(string fileName)
-        {
-            string hash;
-            using (var md5 = MD5.Create())
-            {
-                using (var stream = File.OpenRead(fileName))
-                {
-                    return Convert.ToBase64String(md5.ComputeHash(stream));
-                }
-            }
-        }
     }
 }
