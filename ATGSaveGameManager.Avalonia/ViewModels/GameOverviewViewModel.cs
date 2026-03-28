@@ -4,17 +4,26 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ATGSaveGameManager.ViewModel
 {
-    public class GameOverviewViewModel : PbemViewModelBase
+    public partial class GameOverviewViewModel : PbemViewModelBase
     {
         public RelayCommand StartCommand { get; private set; }
         private ConcurrentDictionary<string, FileInfoModel> files = new ConcurrentDictionary<string, FileInfoModel>();
-        private ConcurrentDictionary<string, FileInfoModel> remoteFiles = new ConcurrentDictionary<string, FileInfoModel>();
+
+        private ConcurrentDictionary<string, FileInfoModel> remoteFiles =
+            new ConcurrentDictionary<string, FileInfoModel>();
+
         private List<string> remoteGames = new List<string>();
+        
+        [ObservableProperty]
         private ObservableCollection<GameInfoViewModel> _gameList;
+        
+        [ObservableProperty]
         private string _lastSyncTime;
 
         public GameOverviewViewModel(MainViewModel mainViewModel) : base(mainViewModel)
@@ -29,7 +38,8 @@ namespace ATGSaveGameManager.ViewModel
             _mainViewModel.IsAvailable = false;
             if (string.IsNullOrWhiteSpace(_mainViewModel.Connection))
             {
-                MessageBox.Show("Error: Connection to Azure blob storage not filled in. Please add key to the appsettings.json file");
+                MessageBox.Show(
+                    "Error: Connection to Azure blob storage not filled in. Please add key to the appsettings.json file");
                 return;
             }
 
@@ -51,6 +61,7 @@ namespace ATGSaveGameManager.ViewModel
                 GameList.Clear();
                 LoadGames();
             }
+
             _mainViewModel.IsAvailable = true;
             LastSyncTime = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
         }
@@ -76,12 +87,14 @@ namespace ATGSaveGameManager.ViewModel
             List<string> keys = remoteFiles.Keys.Union(files.Keys).ToList();
             foreach (string key in keys)
             {
-                var gameViewModel = _gameList.FirstOrDefault(p => p.Model.FileName == key && p.Model.GameType == gameType.Extension);
+                var gameViewModel =
+                    _gameList.FirstOrDefault(p => p.Model.FileName == key && p.Model.GameType == gameType.Extension);
 
                 if (gameViewModel == null)
                 {
                     continue;
                 }
+
                 var game = gameViewModel.Model;
 
                 if (!game.Players.Contains(_mainViewModel.PlayerName))
@@ -134,7 +147,8 @@ namespace ATGSaveGameManager.ViewModel
                     files[key].FileStatus = FileStatus.New;
                     gameStatus = GameStatus.Download;
                 }
-                else if (local == null || (remote != null && local.LastModified < remote.LastModified) && remote.Md5 != local.Md5)
+                else if (local == null || (remote != null && local.LastModified < remote.LastModified) &&
+                         remote.Md5 != local.Md5)
                 {
                     var fileinfoModel = service.DownloadFile(key, $"{gameType.Savegames}\\{key}");
                     files[key] = fileinfoModel;
@@ -167,7 +181,8 @@ namespace ATGSaveGameManager.ViewModel
                     {
                         game.CurrentTurn = 1;
                     }
-                    var jsonObject = JsonConvert.SerializeObject(game);
+
+                    var jsonObject = JsonSerializer.Serialize(game);
                     File.WriteAllText(gamePath, jsonObject);
                     var hash = GetFileHash(gamePath);
                     var bytes = File.ReadAllBytes(gamePath);
@@ -229,6 +244,7 @@ namespace ATGSaveGameManager.ViewModel
                     gameInfoViewModel.GameTypeObject = gameType;
                     gameInfoViewModel.IconImage = new BitmapImage(new Uri(gameType.Icon, UriKind.RelativeOrAbsolute));
                 }
+
                 if (files.ContainsKey(info.FileName))
                 {
                     gameInfoViewModel.File = files[info.FileName];
@@ -238,40 +254,5 @@ namespace ATGSaveGameManager.ViewModel
             }
 
         }
-
-
-        public string LastSyncTime
-        {
-            get
-            {
-                return _lastSyncTime;
-            }
-            set
-            {
-                if (_lastSyncTime != value)
-                {
-                    _lastSyncTime = value;
-                    RaisePropertyChanged(nameof(LastSyncTime));
-                }
-            }
-        }
-
-        public ObservableCollection<GameInfoViewModel> GameList
-        {
-            get
-            {
-                if (_gameList == null)
-                {
-                    _gameList = new ObservableCollection<GameInfoViewModel>();
-                }
-                return _gameList;
-            }
-            set
-            {
-                _gameList = value;
-                RaisePropertyChanged("GameList");
-            }
-        }
-
     }
 }

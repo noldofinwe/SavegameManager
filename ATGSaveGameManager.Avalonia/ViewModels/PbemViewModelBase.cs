@@ -1,10 +1,8 @@
-﻿using GalaSoft.MvvmLight;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
 using System.Security.Cryptography;
-using System.Text;
+using System.Text.Json;
+using ATGSaveGameManager.Avalonia.ViewModels;
 
 namespace ATGSaveGameManager.ViewModel
 {
@@ -22,7 +20,7 @@ namespace ATGSaveGameManager.ViewModel
             using (StreamReader r = new StreamReader(file))
             {
                 string json = r.ReadToEnd();
-                return JsonConvert.DeserializeObject<GameInfoModel>(json);
+                return JsonSerializer.Deserialize<GameInfoModel>(json);
             }
         }
 

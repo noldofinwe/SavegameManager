@@ -1,52 +1,22 @@
-﻿using GalaSoft.MvvmLight;
-using System;
-using System.Windows.Media.Imaging;
+﻿using System;
 using ATGSaveGameManager.Avalonia.ViewModels;
+using Avalonia.Media.Imaging;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace ATGSaveGameManager.ViewModel
 {
-    public class GameTypeViewModel : ViewModelBase
+    public partial class GameTypeViewModel : ViewModelBase
     {
+        [ObservableProperty]
         private GameType _model;
-        private BitmapImage _iconImage;
+        
+        [ObservableProperty]
+        private Bitmap _iconImage;
 
         public GameTypeViewModel(GameType model)
         {
             Model = model;
-            IconImage = new BitmapImage(new Uri(Model.Icon, UriKind.RelativeOrAbsolute));
+            IconImage = new Bitmap(Model.Icon);
         }
-
-        public GameType Model
-        {
-            get
-            {
-                return _model;
-            }
-            set
-            {
-                if (value != _model)
-                {
-                    _model = value;
-                    RaisePropertyChanged(nameof(Model));
-                }
-            }
-        }
-
-        public BitmapImage IconImage
-        {
-            get
-            {
-                return _iconImage;
-            }
-            set
-            {
-                if (value != _iconImage)
-                {
-                    _iconImage = value;
-                    RaisePropertyChanged(nameof(IconImage));
-                }
-            }
-        }
-
     }
 }

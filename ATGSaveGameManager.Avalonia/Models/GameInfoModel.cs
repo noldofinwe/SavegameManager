@@ -1,16 +1,10 @@
-﻿using GalaSoft.MvvmLight;
-using Newtonsoft.Json;
+﻿
+
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Windows.Media.Imaging;
 
 namespace ATGSaveGameManager
 {
-    public class GameInfoModel : ViewModelBase
+    public class GameInfoModel
     {
         public string Name { get; set; }
 
@@ -21,9 +15,7 @@ namespace ATGSaveGameManager
 
         public int? CurrentTurn { get; set; }
         public DateTime LastTurnTime { get; set; }
-
-
+        
         public string GameType { get; set; }
-
     }
 }

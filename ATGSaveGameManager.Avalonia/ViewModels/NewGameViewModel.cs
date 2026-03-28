@@ -1,38 +1,29 @@
-﻿using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Command;
-using Microsoft.Win32;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
+using ATGSaveGameManager.Avalonia;
+using Avalonia.Controls;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace ATGSaveGameManager.ViewModel
 {
-    public class NewGameViewModel : PbemViewModelBase
+    public partial class NewGameViewModel : PbemViewModelBase
     {
-        public RelayCommand BackCommand { get; private set; }
-        public RelayCommand SaveCommand { get; private set; }
-        public RelayCommand SelectFileCommand { get; private set; }
-        public RelayCommand AddPlayerCommand { get; private set; }
-
-        private string _newGameName;
-        private string _newGameFileName;
-        private string _newGameAddPlayer;
-        private GameType _newGameGameType;
+        [ObservableProperty] private string _newGameName;
+        [ObservableProperty] private string _newGameFileName;
+        [ObservableProperty] private string _newGameAddPlayer;
+        [ObservableProperty] private GameType _newGameGameType;
 
         public NewGameViewModel(MainViewModel mainViewModel) : base(mainViewModel)
         {
-            BackCommand = new RelayCommand(Back, null);
-            SaveCommand = new RelayCommand(Save, null);
-            SelectFileCommand = new RelayCommand(SelectFile, null);
-            AddPlayerCommand = new RelayCommand(AddPlayer, null);
             NewGamePlayers = new ObservableCollection<string>();
         }
 
-
+        [RelayCommand]
         private void Save()
         {
             var gameinfo = new GameInfoModel
@@ -42,19 +33,19 @@ namespace ATGSaveGameManager.ViewModel
                 Name = NewGameName,
                 Players = NewGamePlayers.ToArray()
             };
-            var jsonObject = JsonConvert.SerializeObject(gameinfo);
+            var jsonObject = JsonSerializer.Serialize(gameinfo);
 
             File.WriteAllText($"{_mainViewModel.DataDirectory}\\{NewGameName}.json", jsonObject);
             _mainViewModel.AddedNewGame();
-
         }
 
+        [RelayCommand]
         private void Back()
         {
             _mainViewModel.IsCreatingNewGame = false;
         }
 
-
+        [RelayCommand]
         private void AddPlayer()
         {
             if (!string.IsNullOrWhiteSpace(NewGameAddPlayer))
@@ -64,111 +55,41 @@ namespace ATGSaveGameManager.ViewModel
             }
         }
 
-        private void SelectFile()
+        [RelayCommand]
+        private async Task SelectFile()
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
- 
+            var dialog = new OpenFileDialog();
+
             if (NewGameGameType != null)
             {
-                openFileDialog.InitialDirectory = NewGameGameType.Savegames;
-                openFileDialog.Filter = $"Save files (*.{NewGameGameType.Extension})|*.{NewGameGameType.Extension}|All files (*.*)|*.*";
+                dialog.Directory = NewGameGameType.Savegames;
+                dialog.Filters.Add(new FileDialogFilter
+                {
+                    Name = $"{NewGameGameType.Extension} files",
+                    Extensions = { NewGameGameType.Extension }
+                });
             }
             else
             {
-                openFileDialog.InitialDirectory = _mainViewModel.GameTypes.First().Savegames;
-                openFileDialog.Filter = $"All files (*.*)|*.*";
-            }
-            if (openFileDialog.ShowDialog() == true)
-            {
-                NewGameFileName = openFileDialog.FileName;
-            }
-        }
-
-
-        public GameType NewGameGameType
-        {
-            get
-            {
-                return _newGameGameType;
-            }
-            set
-            {
-                if (_newGameGameType != value)
+                dialog.Directory = _mainViewModel.GameTypes.First().Savegames;
+                dialog.Filters.Add(new FileDialogFilter
                 {
-                    _newGameGameType = value;
-                    RaisePropertyChanged(nameof(NewGameGameType));
-                }
+                    Name = "All files",
+                    Extensions = { "*" }
+                });
+            }
+
+            // You must pass a Window as the parent
+            var result = await dialog.ShowAsync(App.MainWindow);
+
+            if (result != null && result.Length > 0)
+            {
+                NewGameFileName = result[0];
             }
         }
 
 
-
-        public string NewGameName
-        {
-            get
-            {
-                return _newGameName;
-            }
-            set
-            {
-                if (_newGameName != value)
-                {
-                    _newGameName = value;
-                    RaisePropertyChanged(nameof(NewGameName));
-                }
-            }
-        }
-
-        public string NewGameAddPlayer
-        {
-            get
-            {
-                return _newGameAddPlayer;
-            }
-            set
-            {
-                if (_newGameAddPlayer != value)
-                {
-                    _newGameAddPlayer = value;
-                    RaisePropertyChanged(nameof(NewGameAddPlayer));
-                }
-            }
-        }
-
-        public string NewGameFileName
-        {
-            get
-            {
-                return _newGameFileName;
-            }
-            set
-            {
-                if (_newGameFileName != value)
-                {
-                    _newGameFileName = value;
-                    RaisePropertyChanged(nameof(NewGameFileName));
-                }
-            }
-        }
-
+        [ObservableProperty]
         private ObservableCollection<string> _newGamePlayers;
-        public ObservableCollection<string> NewGamePlayers
-        {
-            get
-            {
-                if (_newGamePlayers == null)
-                {
-                    _newGamePlayers = new ObservableCollection<string>();
-                }
-                return _newGamePlayers;
-            }
-            set
-            {
-                _newGamePlayers = value;
-                RaisePropertyChanged("NewGamePlayers");
-            }
-        }
-
-
     }
 }

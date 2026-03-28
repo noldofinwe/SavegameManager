@@ -1,8 +1,11 @@
-﻿using ATGSaveGameManager.Avalonia.ViewModels;
+﻿using System.Linq;
+using ATGSaveGameManager.Avalonia.ViewModels;
+using Avalonia.Media.Imaging;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace ATGSaveGameManager.ViewModel
 {
-    public class GameInfoViewModel : ViewModelBase
+    public partial class GameInfoViewModel : ViewModelBase
     {
         private string _player;
 
@@ -12,24 +15,11 @@ namespace ATGSaveGameManager.ViewModel
             _player = player;
         }
 
+        [ObservableProperty]
         private GameInfoModel _model;
 
 
-        public GameInfoModel Model
-        {
-            get
-            {
-                return _model;
-            }
-            set
-            {
-                if (value != _model)
-                {
-                    _model = value;
-                    RaisePropertyChanged(nameof(Model));
-                }
-            }
-        }
+      
 
         public string LastTurnTimeString => Model.LastTurnTime.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss");
 
@@ -53,41 +43,9 @@ namespace ATGSaveGameManager.ViewModel
             }
         }
 
-        private BitmapImage _iconImage;
-
-        public BitmapImage IconImage
-        {
-            get
-            {
-                return _iconImage;
-            }
-            set
-            {
-                if (value != _iconImage)
-                {
-                    _iconImage = value;
-                    RaisePropertyChanged(nameof(IconImage));
-                }
-            }
-        }
-
-        public GameType GameTypeObject
-        {
-            get
-            {
-                return _gameTypeObject;
-            }
-            set
-            {
-                if (value != _gameTypeObject)
-                {
-                    _gameTypeObject = value;
-                    RaisePropertyChanged(nameof(GameTypeObject));
-                }
-
-            }
-        }
-
+        [ObservableProperty]
+        private Bitmap _iconImage;
+        [ObservableProperty]
         private GameType _gameTypeObject;
 
         public bool IsPlayer => Model.Players.Contains(_player);
