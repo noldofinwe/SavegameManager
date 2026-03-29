@@ -51,12 +51,12 @@
             <Grid IsVisible="{Binding GameOverviewVisible}" >
                 <views:GameOverviewView DataContext="{Binding GameOverviewViewModel}" />
             </Grid>
-            <!-- <Grid IsVisible="{Binding NewGameCreatingVisible}"> -->
-            <!--     <view:NewGameView DataContext="{Binding NewGameViewModel}" /> -->
-            <!-- </Grid> -->
-            <!-- <Grid IsVisible="{Binding IsSetup}"> -->
-            <!--     <view:SetupView  DataContext="{Binding SetupViewModel}" /> -->
-            <!-- </Grid> -->
+            <Grid IsVisible="{Binding NewGameCreatingVisible}">
+                <views:NewGameView DataContext="{Binding NewGameViewModel}" />
+            </Grid>
+            <Grid IsVisible="{Binding IsSetup}">
+                <views:SetupView  DataContext="{Binding SetupViewModel}" />
+            </Grid>
         </Grid>
     </Grid>
 </Window>

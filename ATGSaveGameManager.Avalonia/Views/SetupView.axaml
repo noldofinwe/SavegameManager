@@ -4,8 +4,8 @@
              xmlns:my="clr-namespace:ATGSaveGameManager"
              xmlns:viewModel="clr-namespace:ATGSaveGameManager.ViewModel"
              x:DataType="viewModel:SetupViewModel"
-             x:Class="ATGSaveGameManager.Avalonia.Views.SetupView">
-
+             x:Class="ATGSaveGameManager.Avalonia.Views.SetupView"
+            >
     <UserControl.Resources>
         <my:EnumToStringConverter x:Key="DefaultEnumToStringConverter"/>
 
@@ -41,19 +41,19 @@
         <!-- Games -->
         <TextBlock Grid.Row="3" Text="Games" Margin="5"/>
 
+        <TextBlock Text="{Binding GameTypes.Count}" Grid.Row="4" />
         <!-- DataGrid replaces ListView + GridView -->
         <DataGrid Grid.Row="4"
-                  Grid.ColumnSpan="2"
+                  Grid.ColumnSpan="3"
                   ItemsSource="{Binding GameTypes}"
                   SelectedItem="{Binding SelectedGameTypeViewModel}"
                   AutoGenerateColumns="False"
                   HeadersVisibility="Column"
-                  GridLinesVisibility="None"
+                  GridLinesVisibility="Horizontal"
                   RowHeight="32">
-
+        
             <DataGrid.Columns>
-
-                <!-- Icon -->
+               <!-- Icon -->
                 <DataGridTemplateColumn Width="40">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
@@ -64,17 +64,17 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-
+        
                 <!-- Name -->
                 <DataGridTextColumn Header="Name"
                                     Width="150"
                                     Binding="{Binding Model.Name}"/>
-
+        
                 <!-- File extensions -->
                 <DataGridTextColumn Header="File extensions"
                                     Width="125"
                                     Binding="{Binding Model.Extension}"/>
-
+        
             </DataGrid.Columns>
         </DataGrid>
 
@@ -203,8 +203,8 @@
                      Margin="5"/>
 
             <TextBlock Grid.Row="2" Text="Save game directory" Margin="5"/>
-            <TextBlock Grid.Row="2" Grid.Column="1"
-                       Text="{Binding NewGameSaveGame}"
+            <TextBox Grid.Row="2" Grid.Column="1"
+                       Text="{Binding NewGameSaveGame, Mode=TwoWay}"
                        Margin="5"/>
             <Button Grid.Row="2" Grid.Column="2"
                     Content="Select directory"
@@ -231,7 +231,7 @@
             <Button Grid.Column="2"
                     Grid.Row="4"
                     Content="Add"
-                    Command="{Binding AddCommand}"
+                    Command="{Binding Add}"
                     Width="100"
                     Margin="5"
                     HorizontalAlignment="Right"/>

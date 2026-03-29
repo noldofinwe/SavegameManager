@@ -1,5 +1,4 @@
 ﻿using ATGSaveGameManager.Configuration;
-
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Linq;
@@ -8,56 +7,54 @@ using ATGSaveGameManager.Avalonia;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MsBox.Avalonia;
 
 namespace ATGSaveGameManager.ViewModel
 {
     public partial class SetupViewModel : PbemViewModelBase
     {
-        [ObservableProperty]
-        private string _selectedPlayerName;
-        [ObservableProperty]
-        private string _selectedConnection;
-        [ObservableProperty]
-        private string _newGameSaveGame;
-        [ObservableProperty]
-        private string _newGameName;
-        [ObservableProperty]
-        private string _newGameExtension;
-        [ObservableProperty]
-        private string _newGameSaveFolder;
-        [ObservableProperty]
-        private string _newGameIcon;
-        [ObservableProperty]
-        private bool _adding;
-        [ObservableProperty]
-        private ObservableCollection<GameTypeViewModel> _gameTypes =[];
-        [ObservableProperty]
-        private GameTypeViewModel _selectedGameTypeViewModel;
+        [ObservableProperty] private string _selectedPlayerName;
+        [ObservableProperty] private string _selectedConnection;
+        [ObservableProperty] private string _newGameSaveGame;
+        [ObservableProperty] private string _newGameName;
+        [ObservableProperty] private string _newGameExtension;
+        [ObservableProperty] private string _newGameSaveFolder;
+        [ObservableProperty] private string _newGameIcon;
+        [ObservableProperty] private bool _adding;
+        [ObservableProperty] private ObservableCollection<GameTypeViewModel> _gameTypes = [];
+        [ObservableProperty] private GameTypeViewModel _selectedGameTypeViewModel;
 
         public SetupViewModel(MainViewModel mainViewModel) : base(mainViewModel)
         {
-          
         }
 
         [RelayCommand]
-        private void Add()
+        public async Task Add()
         {
-            // if(string.IsNullOrWhiteSpace(NewGameExtension))
-            // {
-            //     MessageBox.Show("Game extension is empty.");
-            //     return;
-            // }
-            // if (string.IsNullOrWhiteSpace(NewGameSaveGame))
-            // {
-            //     MessageBox.Show("Game Save game folder is empty.");
-            //     return;
-            // }
-            // if (string.IsNullOrWhiteSpace(NewGameName))
-            // {
-            //     MessageBox.Show("Game Name is empty.");
-            //     return;
-            // }
-    
+            if (string.IsNullOrWhiteSpace(NewGameExtension))
+            {
+                await MessageBoxManager
+                    .GetMessageBoxStandard("Error", "Game extension is empty.")
+                    .ShowAsync();
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(NewGameSaveGame))
+            {
+                await MessageBoxManager
+                    .GetMessageBoxStandard("Error", "Game Save game folder is empty.")
+                    .ShowAsync();
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(NewGameName))
+            {
+                await MessageBoxManager
+                    .GetMessageBoxStandard("Error", "Game Name is empty.")
+                    .ShowAsync();
+                return;
+            }
+
             var gameType = new GameType
             {
                 Name = NewGameName,
@@ -70,8 +67,9 @@ namespace ATGSaveGameManager.ViewModel
             Adding = false;
         }
 
+
         [RelayCommand]
-        private void Cancel()
+        public void Cancel()
         {
             NewGameExtension = null;
             NewGameSaveGame = null;
@@ -81,13 +79,13 @@ namespace ATGSaveGameManager.ViewModel
         }
 
         [RelayCommand]
-        private void AddNew()
+        public void AddNew()
         {
             Adding = true;
         }
 
         [RelayCommand]
-        private void Delete()
+        public void Delete()
         {
             GameTypes.Remove(SelectedGameTypeViewModel);
             SelectedGameTypeViewModel = null;
@@ -113,11 +111,12 @@ namespace ATGSaveGameManager.ViewModel
                     var viewModel = new GameTypeViewModel(type);
                     GameTypes.Add(viewModel);
                 }
+                OnPropertyChanged(nameof(GameTypes));
             }
         }
 
         [RelayCommand]
-        private async Task SelectDirectory()
+        public async Task SelectDirectory()
         {
             var dialog = new OpenFolderDialog
             {
@@ -146,8 +145,9 @@ namespace ATGSaveGameManager.ViewModel
                 NewGameSaveGame = result;
             }
         }
+
         [RelayCommand]
-        private async Task SelectIcon()
+        public async Task SelectIcon()
         {
             var dialog = new OpenFileDialog
             {
@@ -228,49 +228,23 @@ namespace ATGSaveGameManager.ViewModel
         }
 
 
-        // public GameTypeViewModel SelectedGameTypeViewModel
-        // {
-        //     get
-        //     {
-        //         return _selectedGameTypeViewModel;
-        //     }
-        //     set
-        //     {
-        //         if (_selectedGameTypeViewModel != value)
-        //         {
-        //             _selectedGameTypeViewModel = value;
-        //             RaisePropertyChanged(nameof(SelectedGameTypeViewModel));
-        //             RaisePropertyChanged(nameof(UpdateVisible));
-        //             RaisePropertyChanged(nameof(CanAddVisible));
-        //             RaisePropertyChanged(nameof(AddVisible));
-        //         }
-        //     }
-        // }
+        partial void OnSelectedGameTypeViewModelChanged(GameTypeViewModel value)
+        {
+            OnPropertyChanged(nameof(UpdateVisible));
+            OnPropertyChanged(nameof(CanAddVisible));
+            OnPropertyChanged(nameof(AddVisible));
+        }
+        partial void OnAddingChanged(bool value)
+        {
+            OnPropertyChanged(nameof(CanAddVisible));
 
 
-        //
-        //
-        // public bool Adding
-        // {
-        //     get
-        //     {
-        //         return _adding;
-        //     }
-        //     set
-        //     {
-        //         if (_adding != value)
-        //         {
-        //             _adding = value;
-        //             RaisePropertyChanged(nameof(Adding));
-        //             RaisePropertyChanged(nameof(CanAddVisible));
-        //             RaisePropertyChanged(nameof(AddVisible));
-        //         }
-        //     }
-        // }
+            OnPropertyChanged(nameof(AddVisible));
+        }
+
 
         public bool UpdateVisible => SelectedGameTypeViewModel != null;
         public bool CanAddVisible => SelectedGameTypeViewModel == null && !Adding;
         public bool AddVisible => SelectedGameTypeViewModel == null && Adding;
-
     }
 }

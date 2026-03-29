@@ -37,7 +37,7 @@ namespace ATGSaveGameManager.ViewModel
         [ObservableProperty]
         private SetupViewModel _setupViewModel;
         [ObservableProperty]
-        private ObservableCollection<GameType> _gameTypes;
+        private ObservableCollection<GameType> _gameTypes =[];
         
         private const string _appsettingsName = "appsettings.json";
         public MainViewModel()
@@ -45,7 +45,7 @@ namespace ATGSaveGameManager.ViewModel
             DataDirectory = AppDomain.CurrentDomain.BaseDirectory + "\\data";
             IsAvailable = true;
             IsCreatingNewGame = false;
-
+            
             GameOverviewViewModel = new GameOverviewViewModel(this);
             NewGameViewModel = new NewGameViewModel(this);
             SetupViewModel = new SetupViewModel(this);
@@ -54,7 +54,7 @@ namespace ATGSaveGameManager.ViewModel
         }
 
         [RelayCommand]
-        private void OpenSettings()
+        public void OpenSettings()
         {
             SetupViewModel.SetCurrentSettings(_appSettings);
             IsSetup = true;
@@ -118,78 +118,19 @@ namespace ATGSaveGameManager.ViewModel
         public bool GameOverviewVisible => !IsSetup && !IsCreatingNewGame;
         public bool NewGameCreatingVisible => !IsSetup && IsCreatingNewGame;
         
-        //
-        // public bool IsSetup
-        // {
-        //     get
-        //     {
-        //         return _isSetup;
-        //     }
-        //     set
-        //     {
-        //         if (_isSetup != value)
-        //         {
-        //             _isSetup = value;
-        //             RaisePropertyChanged(nameof(IsSetup));
-        //             RaisePropertyChanged(nameof(GameOverviewVisible));
-        //             RaisePropertyChanged(nameof(NewGameCreatingVisible));
-        //         }
-        //     }
-        // }
-        //
-        //
-        //
-        // public bool IsCreatingNewGame
-        // {
-        //     get
-        //     {
-        //         return _isCreatingNewGame;
-        //     }
-        //     set
-        //     {
-        //         if (_isCreatingNewGame != value)
-        //         {
-        //             _isCreatingNewGame = value;
-        //             RaisePropertyChanged(nameof(IsCreatingNewGame));
-        //             RaisePropertyChanged(nameof(GameOverviewVisible));
-        //             RaisePropertyChanged(nameof(NewGameCreatingVisible));
-        //         }
-        //     }
-        // }
-        //
-        //
-        // public bool IsAvailable
-        // {
-        //     get
-        //     {
-        //         return _isAvailable;
-        //     }
-        //     set
-        //     {
-        //         if (_isAvailable != value)
-        //         {
-        //             _isAvailable = value;
-        //             RaisePropertyChanged(nameof(IsAvailable));
-        //         }
-        //     }
-        // }
-        //
-        // public string PlayerName
-        // {
-        //     get
-        //     {
-        //         return _playerName;
-        //     }
-        //     set
-        //     {
-        //         if (_playerName != value)
-        //         {
-        //             _playerName = value;
-        //             RaisePropertyChanged(nameof(PlayerName));
-        //         }
-        //     }
-        // }
-        //
+        partial void OnIsSetupChanged(bool value)
+        {
+            OnPropertyChanged(nameof(GameOverviewVisible));
+            OnPropertyChanged(nameof(NewGameCreatingVisible));
+            
+        }
+
+        partial void OnIsCreatingNewGameChanged(bool value)
+        {
+            OnPropertyChanged(nameof(GameOverviewVisible));
+            OnPropertyChanged(nameof(NewGameCreatingVisible));
+        }
+      
 
         private void GetGameTypes()
         {
@@ -214,6 +155,7 @@ namespace ATGSaveGameManager.ViewModel
 
             // Reload settings
             LoadAppSettings();
+            SetupViewModel.SetCurrentSettings(_appSettings);
         }
         
     }

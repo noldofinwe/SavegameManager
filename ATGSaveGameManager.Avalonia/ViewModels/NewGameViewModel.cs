@@ -24,7 +24,7 @@ namespace ATGSaveGameManager.ViewModel
         }
 
         [RelayCommand]
-        private void Save()
+        public void Save()
         {
             var gameinfo = new GameInfoModel
             {
@@ -40,13 +40,13 @@ namespace ATGSaveGameManager.ViewModel
         }
 
         [RelayCommand]
-        private void Back()
+        public void Back()
         {
             _mainViewModel.IsCreatingNewGame = false;
         }
 
         [RelayCommand]
-        private void AddPlayer()
+        public void AddPlayer()
         {
             if (!string.IsNullOrWhiteSpace(NewGameAddPlayer))
             {
@@ -56,7 +56,7 @@ namespace ATGSaveGameManager.ViewModel
         }
 
         [RelayCommand]
-        private async Task SelectFile()
+        public async Task SelectFile()
         {
             var dialog = new OpenFileDialog();
 
@@ -71,7 +71,7 @@ namespace ATGSaveGameManager.ViewModel
             }
             else
             {
-                dialog.Directory = _mainViewModel.GameTypes.First().Savegames;
+                dialog.Directory = _mainViewModel.SetupViewModel.GameTypes.First().Model.Savegames;
                 dialog.Filters.Add(new FileDialogFilter
                 {
                     Name = "All files",
