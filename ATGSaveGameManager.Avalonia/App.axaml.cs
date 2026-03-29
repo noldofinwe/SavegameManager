@@ -18,7 +18,7 @@ public partial class App : Application
         AvaloniaXamlLoader.Load(this);
     }
 
-    public static Window? MainWindow { get; set; }
+    public static MainWindow? MainWindow { get; set; }
     
     public override void OnFrameworkInitializationCompleted()
     {
@@ -31,7 +31,8 @@ public partial class App : Application
             {
                 DataContext = new MainViewModel(),
             };
-            MainWindow = desktop.MainWindow;
+            MainWindow = (MainWindow)desktop.MainWindow;
+            MainWindow.Initizalize();
         }
 
         base.OnFrameworkInitializationCompleted();

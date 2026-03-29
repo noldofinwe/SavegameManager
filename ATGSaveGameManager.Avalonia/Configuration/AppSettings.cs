@@ -15,6 +15,9 @@ namespace ATGSaveGameManager.Configuration
         public ConnectionStrings ConnectionStrings { get; set; }
         public GameType[] GamesTypes { get; set; }
         public string Player { get; set; }
-
+        
+        public string Jid { get; set; }
+        // Temp
+        public string Password { get; set; }    
     }
 }

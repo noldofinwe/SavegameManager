@@ -29,11 +29,11 @@
         </Grid.RowDefinitions>
 
         <!-- Player name -->
-        <TextBlock Grid.Row="0" Text="Player name" Margin="5"/>
+        <TextBlock Grid.Row="0" Text="Jid" Margin="5"/>
         <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedPlayerName}" Margin="5"/>
 
         <!-- Azure connection -->
-        <TextBlock Grid.Row="1" Text="Azure connection string" Margin="5"/>
+        <TextBlock Grid.Row="1" Text="Password" Margin="5"/>
         <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedConnection}" Margin="5"/>
 
         <Separator Grid.Row="2" Grid.ColumnSpan="3"/>

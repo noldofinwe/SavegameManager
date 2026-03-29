@@ -24,6 +24,8 @@ namespace ATGSaveGameManager.ViewModel
         [ObservableProperty] private ObservableCollection<GameTypeViewModel> _gameTypes = [];
         [ObservableProperty] private GameTypeViewModel _selectedGameTypeViewModel;
 
+        
+        
         public SetupViewModel(MainViewModel mainViewModel) : base(mainViewModel)
         {
         }
@@ -103,7 +105,7 @@ namespace ATGSaveGameManager.ViewModel
             GameTypes.Clear();
             Cancel();
             SelectedPlayerName = appSettings.Player;
-            SelectedConnection = appSettings?.ConnectionStrings?.BlobStorageKey;
+            SelectedConnection = appSettings.Password;
 
             if (appSettings?.GamesTypes != null)
             {
@@ -222,7 +224,7 @@ namespace ATGSaveGameManager.ViewModel
                 return;
             }
 
-            _mainViewModel.UpdateAppsettings(
+            await _mainViewModel.UpdateAppsettings(
                 SelectedPlayerName,
                 SelectedConnection,
                 GameTypes.Select(p => p.Model));

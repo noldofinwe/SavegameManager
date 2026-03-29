@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -31,12 +32,10 @@ namespace ATGSaveGameManager.ViewModel
                 FileName = Path.GetFileName(NewGameFileName),
                 GameType = NewGameGameType.Extension,
                 Name = NewGameName,
+                Id = Guid.NewGuid().ToString("N"),
                 Players = NewGamePlayers.ToArray()
             };
-            var jsonObject = JsonSerializer.Serialize(gameinfo);
-
-            File.WriteAllText($"{_mainViewModel.DataDirectory}\\{NewGameName}.json", jsonObject);
-            _mainViewModel.AddedNewGame();
+                    _mainViewModel.AddedNewGame(gameinfo);
         }
 
         [RelayCommand]

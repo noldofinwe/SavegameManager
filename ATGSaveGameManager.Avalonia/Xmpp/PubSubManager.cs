@@ -1,9 +1,10 @@
 using System;
-using System.Diagnostics;
-using System.Reactive.Linq;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Xml.Linq;
+using ATGSaveGameManager;
+using ATGSaveGameManager.Avalonia.Xmpp;
 using XmppDotNet;
-using XmppDotNet.Xml;
 using XmppDotNet.Xmpp;
 using XmppDotNet.Xmpp.Client;
 using XmppDotNet.Xmpp.PubSub;
@@ -13,52 +14,49 @@ public class PubSubManager
     private readonly XmppClient _client;
     private readonly string _pubsubService;
 
-    public event EventHandler<PubSubItemEventArgs> OnItemReceived;
-
+ 
     public PubSubManager(XmppClient client, string pubsubService)
     {
         _client = client;
         _pubsubService = pubsubService;
-
-        _client.XmppXElementReceived
-            .Where(el => el is Message)
-            .Subscribe(el =>
-            {
-                // handle the message here
-                Debug.WriteLine(el.ToString());
-            });
     }
 
-    // ------------------------------------------------------------
-    // Create a node
-    // ------------------------------------------------------------
-    public void CreateNode(string node)
+    // ----------------- Create node -----------------
+    public void CreateGame(GameInfoModel gameInfo)
     {
-        var iq = new Iq("TO", _pubsubService);
+        var iq = new Iq
+        {
+            Type = IqType.Set,
+            To   = _pubsubService
+        };
+
         var pubsub = new PubSub();
+        var create = new Create { Node = "game/" + gameInfo.Id };
 
-        var create = new Create { Node = node };
         pubsub.Add(create);
-
-        // Optional: add <configure/> if you want default config
-        pubsub.Add(new Configure());
+        pubsub.Add(new Configure());   // optional: default config
 
         iq.Add(pubsub);
         _client.SendIqAsync(iq);
+        
+        Publish(gameInfo.Id, XmppSerializer.ToXElement(gameInfo), "metadata");
+        
     }
 
-    // ------------------------------------------------------------
-    // Subscribe to a node
-    // ------------------------------------------------------------
+    // ----------------- Subscribe -----------------
     public void Subscribe(string node)
     {
-        var iq = new Iq("TO", _pubsubService);
-        var pubsub = new PubSub();
+        var iq = new Iq
+        {
+            Type = IqType.Set,
+            To   = _pubsubService
+        };
 
+        var pubsub = new PubSub();
         var subscribe = new Subscribe
         {
             Node = node,
-            Jid = _client.Jid
+            Jid  = _client.Jid
         };
 
         pubsub.Add(subscribe);
@@ -67,15 +65,17 @@ public class PubSubManager
         _client.SendIqAsync(iq);
     }
 
-    // ------------------------------------------------------------
-    // Publish an item
-    // ------------------------------------------------------------
+    // ----------------- Publish -----------------
     public void Publish(string node, XElement payload, string itemId = null)
     {
-        var iq = new Iq("TO", _pubsubService);
-        var pubsub = new PubSub();
+        var iq = new Iq
+        {
+            Type = IqType.Set,
+            To   = _pubsubService
+        };
 
-        var publish = new Publish { Node = node };
+        var pubsub  = new PubSub();
+        var publish = new Publish { Node = "game/" + node };
 
         var item = new Item();
         if (!string.IsNullOrEmpty(itemId))
@@ -83,54 +83,58 @@ public class PubSubManager
 
         item.Add(payload);
         publish.Add(item);
-
         pubsub.Add(publish);
         iq.Add(pubsub);
 
         _client.SendIqAsync(iq);
     }
-
-    // ------------------------------------------------------------
-    // Handle incoming <message> with <event/>
-    // ------------------------------------------------------------
-    private void HandleMessage(object sender, Message msg)
+    public async Task<List<string>> ListNodesAsync()
     {
-        // var evt = msg.E("event", Event.Ns);
-        // if (evt == null)
-        //     return;
-        //
-        // var items = evt.SelectSingleElement("items");
-        // if (items == null)
-        //     return;
-        //
-        // foreach (var item in items.GetElements<Item>())
-        // {
-        //     var payload = item.FirstChild;
-        //     if (payload != null)
-        //     {
-        //         OnItemReceived?.Invoke(this, new PubSubItemEventArgs(
-        //             items.Node,
-        //             item.Id,
-        //             payload
-        //         ));
-        //     }
-        // }
+        var iq = new Iq
+        {
+            Type = IqType.Get,
+            To   = _pubsubService
+        };
+
+        // <query xmlns='http://jabber.org/protocol/disco#items'/>
+        var query = new XElement("query", "http://jabber.org/protocol/disco#items");
+        iq.Add(query);
+
+        // Send IQ and get response
+        var response = await _client.SendIqAsync(iq);
+
+        // Find <query> element in disco#items namespace
+        XNamespace ns = "http://jabber.org/protocol/disco#items";
+        var queryElement = response.Element(ns + "query");
+
+        var result = new List<string>();
+
+        if (queryElement != null)
+        {
+            foreach (var item in queryElement.Elements(ns + "item"))
+            {
+                var node = (string)item.Attribute("node");
+                if (!string.IsNullOrEmpty(node))
+                    result.Add(node);
+            }
+        }
+
+        return result;
     }
+
+
 }
 
-// ------------------------------------------------------------
-// Event args for received items
-// ------------------------------------------------------------
 public class PubSubItemEventArgs : EventArgs
 {
-    public string Node { get; }
+    public string Node   { get; }
     public string ItemId { get; }
     public XElement Payload { get; }
 
     public PubSubItemEventArgs(string node, string itemId, XElement payload)
     {
-        Node = node;
-        ItemId = itemId;
+        Node    = node;
+        ItemId  = itemId;
         Payload = payload;
     }
 }
