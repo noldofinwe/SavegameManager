@@ -24,5 +24,10 @@
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1"/>
         <PackageReference Include="MessageBox.Avalonia" Version="3.3.1.1" />
+        <PackageReference Include="XmppDotNet" Version="3.2.8" />
+        <PackageReference Include="XmppDotNet.Core" Version="3.2.8" />
+        <PackageReference Include="XmppDotNet.Extensions" Version="3.2.8" />
+        <PackageReference Include="XmppDotNet.Srv" Version="3.2.8" />
+        <PackageReference Include="XmppDotNet.Transport.Socket" Version="3.2.8" />
     </ItemGroup>
 </Project>

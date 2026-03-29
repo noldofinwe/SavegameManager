@@ -44,14 +44,13 @@
                 <TextBlock Grid.Column="3" HorizontalAlignment="Right" Text="{Binding PlayerName}" Margin="0,0,5,0" />
             </Grid>
         </DockPanel>
-
-
+        
         <Grid  Grid.Row="1" Grid.ColumnSpan="2">
 
             <Grid IsVisible="{Binding GameOverviewVisible}" >
                 <views:GameOverviewView DataContext="{Binding GameOverviewViewModel}" />
             </Grid>
-            <Grid IsVisible="{Binding NewGameCreatingVisible}">
+            <Grid IsVisible="{Binding IsCreatingNewGame}">
                 <views:NewGameView DataContext="{Binding NewGameViewModel}" />
             </Grid>
             <Grid IsVisible="{Binding IsSetup}">

@@ -91,7 +91,8 @@ namespace ATGSaveGameManager.ViewModel
             SelectedGameTypeViewModel = null;
         }
 
-        private void Update()
+        [RelayCommand]
+        public void Update()
         {
             SelectedGameTypeViewModel = null;
         }
