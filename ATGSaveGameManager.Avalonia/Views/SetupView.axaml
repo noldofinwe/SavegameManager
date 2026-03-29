@@ -1,0 +1,241 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:ATGSaveGameManager"
+             xmlns:my="clr-namespace:ATGSaveGameManager"
+             xmlns:viewModel="clr-namespace:ATGSaveGameManager.ViewModel"
+             x:DataType="viewModel:SetupViewModel"
+             x:Class="ATGSaveGameManager.Avalonia.Views.SetupView">
+
+    <UserControl.Resources>
+        <my:EnumToStringConverter x:Key="DefaultEnumToStringConverter"/>
+
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="30"/>
+        </Grid.RowDefinitions>
+
+        <!-- Player name -->
+        <TextBlock Grid.Row="0" Text="Player name" Margin="5"/>
+        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedPlayerName}" Margin="5"/>
+
+        <!-- Azure connection -->
+        <TextBlock Grid.Row="1" Text="Azure connection string" Margin="5"/>
+        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedConnection}" Margin="5"/>
+
+        <Separator Grid.Row="2" Grid.ColumnSpan="3"/>
+
+        <!-- Games -->
+        <TextBlock Grid.Row="3" Text="Games" Margin="5"/>
+
+        <!-- DataGrid replaces ListView + GridView -->
+        <DataGrid Grid.Row="4"
+                  Grid.ColumnSpan="2"
+                  ItemsSource="{Binding GameTypes}"
+                  SelectedItem="{Binding SelectedGameTypeViewModel}"
+                  AutoGenerateColumns="False"
+                  HeadersVisibility="Column"
+                  GridLinesVisibility="None"
+                  RowHeight="32">
+
+            <DataGrid.Columns>
+
+                <!-- Icon -->
+                <DataGridTemplateColumn Width="40">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Image Source="{Binding IconImage}"
+                                   Width="24"
+                                   Height="24"
+                                   Stretch="Fill"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Name -->
+                <DataGridTextColumn Header="Name"
+                                    Width="150"
+                                    Binding="{Binding Model.Name}"/>
+
+                <!-- File extensions -->
+                <DataGridTextColumn Header="File extensions"
+                                    Width="125"
+                                    Binding="{Binding Model.Extension}"/>
+
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Add new section -->
+        <Grid Grid.Row="5"
+              Grid.ColumnSpan="3"
+              IsVisible="{Binding CanAddVisible}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Button Grid.Column="0"
+                    Grid.Row="1"
+                    Content="Add new"
+                    Command="{Binding AddNewCommand}"
+                    Width="100"
+                    Margin="5"
+                    HorizontalAlignment="Left"/>
+
+            <Separator Grid.Row="2" Grid.ColumnSpan="3"/>
+
+            <Button Grid.Column="2"
+                    Grid.Row="3"
+                    Content="Save settings"
+                    Command="{Binding SaveSettingsCommand}"/>
+        </Grid>
+
+        <!-- Update section -->
+        <Grid Grid.Row="5"
+              Grid.ColumnSpan="3"
+              IsVisible="{Binding UpdateVisible}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Text="Game name" Margin="5"/>
+            <TextBox Grid.Row="0" Grid.Column="1"
+                     Text="{Binding SelectedGameTypeViewModel.Model.Name}"
+                     Margin="5"/>
+
+            <TextBlock Grid.Row="1" Text="File extension (at2,se1,sav)" Margin="5"/>
+            <TextBox Grid.Row="1" Grid.Column="1"
+                     Text="{Binding SelectedGameTypeViewModel.Model.Extension}"
+                     Margin="5"/>
+
+            <TextBlock Grid.Row="2" Text="Save game directory" Margin="5"/>
+            <TextBlock Grid.Row="2" Grid.Column="1"
+                       Text="{Binding SelectedGameTypeViewModel.Model.Savegames}"
+                       Margin="5"/>
+            <Button Grid.Row="2" Grid.Column="2"
+                    Content="Select directory"
+                    Command="{Binding SelectDirectoryCommand}"
+                    Margin="5"/>
+
+            <TextBlock Grid.Row="3" Text="Icon" Margin="5"/>
+            <TextBlock Grid.Row="3" Grid.Column="1"
+                       Text="{Binding SelectedGameTypeViewModel.Model.Icon}"
+                       Margin="5"/>
+            <Button Grid.Row="3" Grid.Column="2"
+                    Content="Select Icon"
+                    Command="{Binding SelectIconCommand}"
+                    Margin="5"/>
+
+            <Button Grid.Column="0"
+                    Grid.Row="4"
+                    Content="Delete"
+                    Command="{Binding DeleteCommand}"
+                    Width="100"
+                    Margin="5"
+                    HorizontalAlignment="Left"/>
+
+            <Button Grid.Column="2"
+                    Grid.Row="4"
+                    Content="Update"
+                    Command="{Binding Update}"
+                    Width="100"
+                    Margin="5"
+                    HorizontalAlignment="Right"/>
+        </Grid>
+
+        <!-- Add section -->
+        <Grid Grid.Row="5"
+              Grid.ColumnSpan="3"
+              IsVisible="{Binding AddVisible}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Text="Game name" Margin="5"/>
+            <TextBox Grid.Row="0" Grid.Column="1"
+                     Text="{Binding NewGameName}"
+                     Margin="5"/>
+
+            <TextBlock Grid.Row="1" Text="File extension (at2,se1,sav)" Margin="5"/>
+            <TextBox Grid.Row="1" Grid.Column="1"
+                     Text="{Binding NewGameExtension}"
+                     Margin="5"/>
+
+            <TextBlock Grid.Row="2" Text="Save game directory" Margin="5"/>
+            <TextBlock Grid.Row="2" Grid.Column="1"
+                       Text="{Binding NewGameSaveGame}"
+                       Margin="5"/>
+            <Button Grid.Row="2" Grid.Column="2"
+                    Content="Select directory"
+                    Command="{Binding SelectDirectoryCommand}"
+                    Margin="5"/>
+
+            <TextBlock Grid.Row="3" Text="Icon" Margin="5"/>
+            <TextBlock Grid.Row="3" Grid.Column="1"
+                       Text="{Binding NewGameIcon}"
+                       Margin="5"/>
+            <Button Grid.Row="3" Grid.Column="2"
+                    Content="Select Icon"
+                    Command="{Binding SelectIconCommand}"
+                    Margin="5"/>
+
+            <Button Grid.Column="0"
+                    Grid.Row="4"
+                    Content="Cancel"
+                    Command="{Binding Cancel}"
+                    Width="100"
+                    Margin="5"
+                    HorizontalAlignment="Left"/>
+
+            <Button Grid.Column="2"
+                    Grid.Row="4"
+                    Content="Add"
+                    Command="{Binding AddCommand}"
+                    Width="100"
+                    Margin="5"
+                    HorizontalAlignment="Right"/>
+        </Grid>
+
+    </Grid>
+</UserControl>

@@ -1,0 +1,85 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModel="clr-namespace:ATGSaveGameManager.ViewModel"
+             x:DataType="viewModel:NewGameViewModel"
+
+             x:Class="ATGSaveGameManager.Avalonia.Views.NewGameView">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="30" />
+        </Grid.RowDefinitions>
+
+        <!-- Game name -->
+        <TextBlock Grid.Row="0" Text="Game name" Margin="5"/>
+        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding NewGameName}" Margin="5"/>
+
+        <!-- Game type -->
+        <TextBlock Grid.Row="1" Text="Game Type" Margin="5"/>
+        <ComboBox Grid.Row="1"
+                  Grid.Column="1"
+                  ItemsSource="{Binding MainViewModel.GameTypes}"
+                  SelectedItem="{Binding NewGameGameType}"
+                  SelectedIndex="0"
+                  Margin="5"
+                  ItemTemplate="{StaticResource GameTypeTemplate}"/>
+
+        <!-- File -->
+        <TextBlock Grid.Row="2" Text="File" Margin="5"/>
+        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding NewGameFileName}" Margin="5"/>
+        <Button Grid.Row="2"
+                Grid.Column="2"
+                Content="SelectFile"
+                Command="{Binding SelectFile}"
+                Margin="5"/>
+
+        <!-- Players -->
+        <TextBlock Grid.Row="3" Text="Players" Margin="5"/>
+
+        <TextBox Grid.Row="4"
+                 Grid.Column="0"
+                 Text="{Binding NewGameAddPlayer}"
+                 Margin="5"/>
+
+        <Button Grid.Row="4"
+                Grid.Column="1"
+                Content="Add"
+                Command="{Binding AddPlayer}"
+                Margin="5"/>
+
+        <ListBox Grid.Row="5"
+                 Grid.ColumnSpan="2"
+                 ItemsSource="{Binding NewGamePlayers}"
+                 Margin="5"/>
+
+        <!-- Buttons -->
+        <Button Grid.Row="6"
+                Grid.Column="0"
+                Content="Back"
+                Command="{Binding Back}"
+                Width="100"
+                Margin="5"
+                HorizontalAlignment="Left"/>
+
+        <Button Grid.Row="6"
+                Grid.Column="2"
+                Content="Save"
+                Command="{Binding Save}"
+                Width="100"
+                Margin="5"
+                HorizontalAlignment="Right"/>
+
+    </Grid>
+</UserControl>

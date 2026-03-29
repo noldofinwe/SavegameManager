@@ -5,6 +5,8 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using ATGSaveGameManager.Azure;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -12,36 +14,32 @@ namespace ATGSaveGameManager.ViewModel
 {
     public partial class GameOverviewViewModel : PbemViewModelBase
     {
-        public RelayCommand StartCommand { get; private set; }
         private ConcurrentDictionary<string, FileInfoModel> files = new ConcurrentDictionary<string, FileInfoModel>();
 
         private ConcurrentDictionary<string, FileInfoModel> remoteFiles =
             new ConcurrentDictionary<string, FileInfoModel>();
 
         private List<string> remoteGames = new List<string>();
-        
-        [ObservableProperty]
-        private ObservableCollection<GameInfoViewModel> _gameList;
-        
-        [ObservableProperty]
-        private string _lastSyncTime;
+
+        [ObservableProperty] private ObservableCollection<GameInfoViewModel> _gameList;
+
+        [ObservableProperty] private string _lastSyncTime;
 
         public GameOverviewViewModel(MainViewModel mainViewModel) : base(mainViewModel)
         {
-            StartCommand = new RelayCommand(Start, null);
             GameList = new ObservableCollection<GameInfoViewModel>();
         }
 
-
+        [RelayCommand]
         private void Start()
         {
             _mainViewModel.IsAvailable = false;
-            if (string.IsNullOrWhiteSpace(_mainViewModel.Connection))
-            {
-                MessageBox.Show(
-                    "Error: Connection to Azure blob storage not filled in. Please add key to the appsettings.json file");
-                return;
-            }
+            // if (string.IsNullOrWhiteSpace(_mainViewModel.Connection))
+            // {
+            //     MessageBox.Show(
+            //         "Error: Connection to Azure blob storage not filled in. Please add key to the appsettings.json file");
+            //     return;
+            // }
 
             files.Clear();
             remoteFiles.Clear();
@@ -55,7 +53,6 @@ namespace ATGSaveGameManager.ViewModel
             LoadGames();
             foreach (var gameType in _mainViewModel.GameTypes)
             {
-
                 IndexLocally(gameType.Savegames);
                 SyncDifferences(gameType);
                 GameList.Clear();
@@ -129,7 +126,6 @@ namespace ATGSaveGameManager.ViewModel
                     files[key].FileStatus = FileStatus.Uploaded;
                     remoteFiles.TryAdd(key, local);
                     gameStatus = GameStatus.Upload;
-
                 }
                 else if (local != null && remote.LastModified < local.LastModified && remote.Md5 != local.Md5)
                 {
@@ -242,7 +238,7 @@ namespace ATGSaveGameManager.ViewModel
                 if (gameType != null)
                 {
                     gameInfoViewModel.GameTypeObject = gameType;
-                    gameInfoViewModel.IconImage = new BitmapImage(new Uri(gameType.Icon, UriKind.RelativeOrAbsolute));
+                    gameInfoViewModel.IconImage = new Bitmap(gameType.Icon);
                 }
 
                 if (files.ContainsKey(info.FileName))
@@ -252,7 +248,6 @@ namespace ATGSaveGameManager.ViewModel
 
                 GameList.Add(gameInfoViewModel);
             }
-
         }
     }
 }

@@ -6,6 +6,8 @@ using System.Linq;
 using Avalonia.Markup.Xaml;
 using ATGSaveGameManager.Avalonia.ViewModels;
 using ATGSaveGameManager.Avalonia.Views;
+using ATGSaveGameManager.ViewModel;
+using Avalonia.Controls;
 
 namespace ATGSaveGameManager.Avalonia;
 
@@ -16,6 +18,8 @@ public partial class App : Application
         AvaloniaXamlLoader.Load(this);
     }
 
+    public static Window? MainWindow { get; set; }
+    
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -25,8 +29,9 @@ public partial class App : Application
             DisableAvaloniaDataAnnotationValidation();
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainWindowViewModel(),
+                DataContext = new MainViewModel(),
             };
+            MainWindow = desktop.MainWindow;
         }
 
         base.OnFrameworkInitializationCompleted();

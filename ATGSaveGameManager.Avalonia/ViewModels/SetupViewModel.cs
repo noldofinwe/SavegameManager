@@ -3,6 +3,9 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Linq;
+using System.Threading.Tasks;
+using ATGSaveGameManager.Avalonia;
+using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -17,6 +20,8 @@ namespace ATGSaveGameManager.ViewModel
         [ObservableProperty]
         private string _newGameSaveGame;
         [ObservableProperty]
+        private string _newGameName;
+        [ObservableProperty]
         private string _newGameExtension;
         [ObservableProperty]
         private string _newGameSaveFolder;
@@ -25,7 +30,7 @@ namespace ATGSaveGameManager.ViewModel
         [ObservableProperty]
         private bool _adding;
         [ObservableProperty]
-        private ObservableCollection<GameTypeViewModel> _gameTypes;
+        private ObservableCollection<GameTypeViewModel> _gameTypes =[];
         [ObservableProperty]
         private GameTypeViewModel _selectedGameTypeViewModel;
 
@@ -66,7 +71,7 @@ namespace ATGSaveGameManager.ViewModel
         }
 
         [RelayCommand]
-        private void CancelAdd()
+        private void Cancel()
         {
             NewGameExtension = null;
             NewGameSaveGame = null;
@@ -97,12 +102,11 @@ namespace ATGSaveGameManager.ViewModel
         public void SetCurrentSettings(AppSettings appSettings)
         {
             GameTypes.Clear();
-            CancelAdd();
+            Cancel();
             SelectedPlayerName = appSettings.Player;
-            SelectedConnection = appSettings.ConnectionStrings.BlobStorageKey;
-            SelectedConnection = appSettings.ConnectionStrings?.BlobStorageKey;
+            SelectedConnection = appSettings?.ConnectionStrings?.BlobStorageKey;
 
-            if (appSettings.GamesTypes != null)
+            if (appSettings?.GamesTypes != null)
             {
                 foreach (var type in appSettings.GamesTypes)
                 {
@@ -113,76 +117,114 @@ namespace ATGSaveGameManager.ViewModel
         }
 
         [RelayCommand]
-        private void SelectDirectory()
+        private async Task SelectDirectory()
         {
-            var openFolder = new CommonOpenFileDialog();
-            openFolder.AllowNonFileSystemItems = true;
-            openFolder.Multiselect = false;
-            openFolder.IsFolderPicker = true;
-            openFolder.Title = "Select the game Savegame folder";
-
-            if (openFolder.ShowDialog() != CommonFileDialogResult.Ok)
+            var dialog = new OpenFolderDialog
             {
-                MessageBox.Show("No Folder selected");
+                Title = "Select the game Savegame folder"
+            };
+
+            // Show dialog — requires a parent window
+            var result = await dialog.ShowAsync(App.MainWindow);
+
+            if (string.IsNullOrWhiteSpace(result))
+            {
+                // You can use MsBox.Avalonia or your own dialog service
+                var box = MsBox.Avalonia.MessageBoxManager
+                    .GetMessageBoxStandard("Error", "No folder selected");
+                await box.ShowAsync();
                 return;
             }
 
-            // get all the directories in selected dirctory
+            // Apply result
             if (UpdateVisible)
             {
-                SelectedGameTypeViewModel.Model.Savegames = openFolder.FileName;
+                SelectedGameTypeViewModel.Model.Savegames = result;
             }
             else
             {
-                NewGameSaveGame = openFolder.FileName;
+                NewGameSaveGame = result;
             }
         }
-
         [RelayCommand]
-        private void SelectIcon()
+        private async Task SelectIcon()
         {
-            var openFolder = new CommonOpenFileDialog();
-            openFolder.AllowNonFileSystemItems = true;
-            openFolder.Multiselect = false;
-            openFolder.IsFolderPicker = false;
-            openFolder.Title = "Select the game Icon";
-
-            if (openFolder.ShowDialog() != CommonFileDialogResult.Ok)
+            var dialog = new OpenFileDialog
             {
-                MessageBox.Show("No Icon selected");
+                Title = "Select the game Icon",
+                AllowMultiple = false
+            };
+
+            // Optional: restrict to image files
+            dialog.Filters.Add(new FileDialogFilter
+            {
+                Name = "Image files",
+                Extensions = { "png", "jpg", "jpeg", "bmp", "ico" }
+            });
+
+            dialog.Filters.Add(new FileDialogFilter
+            {
+                Name = "All files",
+                Extensions = { "*" }
+            });
+
+            // Show dialog — requires a parent window
+            var result = await dialog.ShowAsync(App.MainWindow);
+
+            if (result == null || result.Length == 0)
+            {
+                var box = MsBox.Avalonia.MessageBoxManager
+                    .GetMessageBoxStandard("Error", "No icon selected");
+                await box.ShowAsync();
                 return;
             }
 
+            var file = result[0];
+
             if (UpdateVisible)
             {
-                SelectedGameTypeViewModel.Model.Icon = openFolder.FileName;
+                SelectedGameTypeViewModel.Model.Icon = file;
             }
             else
             {
-                NewGameIcon = openFolder.FileName;
+                NewGameIcon = file;
             }
         }
 
+
         [RelayCommand]
-        public void SaveSettings()
+        public async Task SaveSettings()
         {
             if (string.IsNullOrWhiteSpace(SelectedPlayerName))
             {
-                MessageBox.Show("Player name is empty.");
-                return;
-            }
-            if (string.IsNullOrWhiteSpace(SelectedConnection))
-            {
-                MessageBox.Show("No Azure blob storage connection has been selected, check readme on how to create Azure blob storage and how to find connection string.");
-                return;
-            }
-            if (GameTypes.Count == 0)
-            {
-                MessageBox.Show("No games have been selected.");
+                await MsBox.Avalonia.MessageBoxManager
+                    .GetMessageBoxStandard("Error", "Player name is empty.")
+                    .ShowAsync();
                 return;
             }
 
-            _mainViewModel.UpdateAppsettings(SelectedPlayerName, SelectedConnection, GameTypes.Select(p => p.Model));
+            if (string.IsNullOrWhiteSpace(SelectedConnection))
+            {
+                await MsBox.Avalonia.MessageBoxManager
+                    .GetMessageBoxStandard(
+                        "Error",
+                        "No Azure blob storage connection has been selected. Check the readme for instructions.")
+                    .ShowAsync();
+                return;
+            }
+
+            if (GameTypes.Count == 0)
+            {
+                await MsBox.Avalonia.MessageBoxManager
+                    .GetMessageBoxStandard("Error", "No games have been selected.")
+                    .ShowAsync();
+                return;
+            }
+
+            _mainViewModel.UpdateAppsettings(
+                SelectedPlayerName,
+                SelectedConnection,
+                GameTypes.Select(p => p.Model));
         }
 
 
