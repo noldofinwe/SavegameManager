@@ -9,9 +9,9 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="ATGSaveGameManager.Avalonia.Views.MainWindow"
         x:DataType="viewModel:MainViewModel"
-        Icon="/Assets/avalonia-logo.ico"
+        
         Title="ATGSaveGameManager.Avalonia">
-    
+    <!--Icon="/Assets/avalonia-logo.ico"-->
     <Window.Resources>
         <atgSaveGameManager:EnumToStringConverter x:Key="DefaultEnumToStringConverter"/>
     </Window.Resources>
@@ -41,7 +41,12 @@
 
                 </Menu>
                 <TextBlock Grid.Column="2" HorizontalAlignment="Right" Text="Player:" Margin="0,0,5,0" />
-                <TextBlock Grid.Column="3" HorizontalAlignment="Right" Text="{Binding PlayerName}" Margin="0,0,5,0" />
+              <StackPanel  Grid.Column="3" HorizontalAlignment="Right"  Orientation="Horizontal">
+
+
+                <TextBlock  Text="{Binding PlayerName}" Margin="0,0,5,0" />
+                <TextBlock  Text="{Binding Status}" Margin="0,0,5,0" />
+              </StackPanel >
             </Grid>
         </DockPanel>
         

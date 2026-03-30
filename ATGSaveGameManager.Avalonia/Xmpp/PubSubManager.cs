@@ -1,9 +1,9 @@
+using ATGSaveGameManager;
+using ATGSaveGameManager.Avalonia.Xmpp;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using ATGSaveGameManager;
-using ATGSaveGameManager.Avalonia.Xmpp;
 using XmppDotNet;
 using XmppDotNet.Xmpp;
 using XmppDotNet.Xmpp.Client;
@@ -14,7 +14,7 @@ public class PubSubManager
     private readonly XmppClient _client;
     private readonly string _pubsubService;
 
- 
+
     public PubSubManager(XmppClient client, string pubsubService)
     {
         _client = client;
@@ -22,12 +22,13 @@ public class PubSubManager
     }
 
     // ----------------- Create node -----------------
-    public void CreateGame(GameInfoModel gameInfo)
+    public async Task CreateGame(GameInfoModel gameInfo)
     {
         var iq = new Iq
         {
             Type = IqType.Set,
-            To   = _pubsubService
+            To = _pubsubService,
+            Id = Guid.NewGuid().ToString("N")
         };
 
         var pubsub = new PubSub();
@@ -37,10 +38,10 @@ public class PubSubManager
         pubsub.Add(new Configure());   // optional: default config
 
         iq.Add(pubsub);
-        _client.SendIqAsync(iq);
-        
-        Publish(gameInfo.Id, XmppSerializer.ToXElement(gameInfo), "metadata");
-        
+        var result = await _client.SendIqAsync(iq);
+
+        await Publish(gameInfo.Id, XmppSerializer.ToXElement(gameInfo), "metadata");
+
     }
 
     // ----------------- Subscribe -----------------
@@ -49,14 +50,14 @@ public class PubSubManager
         var iq = new Iq
         {
             Type = IqType.Set,
-            To   = _pubsubService
+            To = _pubsubService
         };
 
         var pubsub = new PubSub();
         var subscribe = new Subscribe
         {
             Node = node,
-            Jid  = _client.Jid
+            Jid = _client.Jid
         };
 
         pubsub.Add(subscribe);
@@ -66,15 +67,15 @@ public class PubSubManager
     }
 
     // ----------------- Publish -----------------
-    public void Publish(string node, XElement payload, string itemId = null)
+    public async Task Publish(string node, XElement payload, string itemId = null)
     {
         var iq = new Iq
         {
             Type = IqType.Set,
-            To   = _pubsubService
+            To = _pubsubService
         };
 
-        var pubsub  = new PubSub();
+        var pubsub = new PubSub();
         var publish = new Publish { Node = "game/" + node };
 
         var item = new Item();
@@ -86,14 +87,14 @@ public class PubSubManager
         pubsub.Add(publish);
         iq.Add(pubsub);
 
-        _client.SendIqAsync(iq);
+        var result = await _client.SendIqAsync(iq);
     }
     public async Task<List<string>> ListNodesAsync()
     {
         var iq = new Iq
         {
             Type = IqType.Get,
-            To   = _pubsubService
+            To = _pubsubService
         };
 
         // <query xmlns='http://jabber.org/protocol/disco#items'/>
@@ -127,14 +128,14 @@ public class PubSubManager
 
 public class PubSubItemEventArgs : EventArgs
 {
-    public string Node   { get; }
+    public string Node { get; }
     public string ItemId { get; }
     public XElement Payload { get; }
 
     public PubSubItemEventArgs(string node, string itemId, XElement payload)
     {
-        Node    = node;
-        ItemId  = itemId;
+        Node = node;
+        ItemId = itemId;
         Payload = payload;
     }
 }

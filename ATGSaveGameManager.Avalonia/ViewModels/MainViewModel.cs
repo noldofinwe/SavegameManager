@@ -1,4 +1,7 @@
-﻿using ATGSaveGameManager.Configuration;
+﻿using ATGSaveGameManager.Avalonia.ViewModels;
+using ATGSaveGameManager.Configuration;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -7,15 +10,8 @@ using System.Linq;
 using System.Reactive.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Xml;
-using ATGSaveGameManager.Avalonia.ViewModels;
-using ATGSaveGameManager.Avalonia.Xmpp;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using XmppDotNet;
-using XmppDotNet.Extensions.Client.Message;
 using XmppDotNet.Extensions.Client.Presence;
-using XmppDotNet.Extensions.Client.Roster;
 using XmppDotNet.Transport.Socket;
 using XmppDotNet.Xmpp;
 
@@ -37,7 +33,8 @@ namespace ATGSaveGameManager.ViewModel
         [ObservableProperty]
         private bool _isSetup;
         [ObservableProperty]
-
+        private string _status;
+        [ObservableProperty]
         private string _playerName;
         [ObservableProperty]
         private GameOverviewViewModel _gameOverviewViewModel;
@@ -46,48 +43,50 @@ namespace ATGSaveGameManager.ViewModel
         [ObservableProperty]
         private SetupViewModel _setupViewModel;
         [ObservableProperty]
-        private ObservableCollection<GameType> _gameTypes =[];
-        
+        private ObservableCollection<GameType> _gameTypes = [];
+
         private const string _appsettingsName = "appsettings.json";
 
-        private XmppClient _client;
+        private readonly XmppClient _client;
         private PubSubManager _pubSubManager;
-        
+
         public MainViewModel()
         {
             DataDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data");
             IsAvailable = true;
             IsCreatingNewGame = false;
-            
+
             GameOverviewViewModel = new GameOverviewViewModel(this);
             NewGameViewModel = new NewGameViewModel(this);
             SetupViewModel = new SetupViewModel(this);
+            Status = "Not connected";
 
         }
-        
-    
+
+
 
         public async Task InitializeAsync()
         {
             await LoadAppSettings();
         }
 
-    [RelayCommand]
+        [RelayCommand]
         public void OpenSettings()
         {
             SetupViewModel.SetCurrentSettings(_appSettings);
             IsSetup = true;
         }
 
-        internal void AddedNewGame(GameInfoModel model)
+        internal async Task AddedNewGame(GameInfoModel model)
         {
-            _pubSubManager.CreateGame(model);
+            await _pubSubManager.CreateGame(model);
             IsCreatingNewGame = false;
             GameOverviewViewModel.LoadGames();
         }
 
         private async Task LoadAppSettings()
         {
+            //Status = "Loading settings";
             ReadAppSettings();
 
             Connection = _appSettings.Password;
@@ -99,8 +98,8 @@ namespace ATGSaveGameManager.ViewModel
 
             SetupViewModel.SetCurrentSettings(_appSettings);
             GameOverviewViewModel.LoadGames();
-            if(!string.IsNullOrWhiteSpace(_appSettings.Player) && !string.IsNullOrWhiteSpace(_appSettings.Password))
-               await ConnectXmpp(_appSettings.Player, _appSettings.Password);
+            if (!string.IsNullOrWhiteSpace(_appSettings.Player) && !string.IsNullOrWhiteSpace(_appSettings.Password))
+                await ConnectXmpp(_appSettings.Player, _appSettings.Password);
         }
 
         private async Task ConnectXmpp(string jid, string password)
@@ -123,23 +122,25 @@ namespace ATGSaveGameManager.ViewModel
                 Jid = jid,
                 Password = password
             };
-
+            _pubSubManager = new PubSubManager(xmppClient, "saves.bobbinhold.net");
             // subscribe to the Binded session state
             xmppClient
-                .StateChanged
-                .Where(s => s == SessionState.Binded)
-                .Subscribe(async v =>
-                {
-          
-        
-                    // send our online presence to the server
-                    await xmppClient.SendPresenceAsync(Show.Chat, "free for chat");
+                      .StateChanged
+                      .Where(s => s == SessionState.Binded)
+                      .Subscribe(async v =>
+                      {
 
-                   });
+                          var nodes = await _pubSubManager.ListNodesAsync();
+                          Status = "Connected";
+                          // send our online presence to the server
+                          await xmppClient.SendPresenceAsync(Show.Chat, "free for chat");
+
+                      });
 
             // connect so the server
+            Status = "Connecting";
             await xmppClient.ConnectAsync();
-            _pubSubManager = new PubSubManager(xmppClient, "saves.bobbinhold.net");
+
         }
 
         private void ReadAppSettings()
@@ -174,16 +175,16 @@ namespace ATGSaveGameManager.ViewModel
                 IsSetup = false;
             }
         }
-        
+
 
         public bool GameOverviewVisible => !IsSetup && !IsCreatingNewGame;
         public bool NewGameCreatingVisible => !IsSetup && IsCreatingNewGame;
-        
+
         partial void OnIsSetupChanged(bool value)
         {
             OnPropertyChanged(nameof(GameOverviewVisible));
             OnPropertyChanged(nameof(NewGameCreatingVisible));
-            
+
         }
 
         partial void OnIsCreatingNewGameChanged(bool value)
@@ -191,7 +192,7 @@ namespace ATGSaveGameManager.ViewModel
             OnPropertyChanged(nameof(GameOverviewVisible));
             OnPropertyChanged(nameof(NewGameCreatingVisible));
         }
-      
+
 
         private void GetGameTypes()
         {
@@ -200,10 +201,10 @@ namespace ATGSaveGameManager.ViewModel
             {
                 GameTypes.Add(gametype);
             }
-            
+
         }
-        
-        
+
+
 
         public async Task UpdateAppsettings(string selectedPlayerName, string selectedConnection, IEnumerable<GameType> gameTypes)
         {
@@ -220,6 +221,6 @@ namespace ATGSaveGameManager.ViewModel
             await LoadAppSettings();
             SetupViewModel.SetCurrentSettings(_appSettings);
         }
-        
+
     }
 }

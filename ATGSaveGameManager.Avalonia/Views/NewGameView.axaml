@@ -28,13 +28,22 @@
 
         <!-- Game type -->
         <TextBlock Grid.Row="1" Text="Game Type" Margin="5"/>
-        <ComboBox Grid.Row="1"
-                  Grid.Column="1"
-                  ItemsSource="{Binding MainViewModel.SetupViewModel.GameTypes}"
-                  SelectedItem="{Binding NewGameGameType}"
-                  SelectedIndex="0"
-                  Margin="5"
-                  ItemTemplate="{StaticResource GameTypeTemplate}"/>
+      <ComboBox Grid.Row="1"
+                Grid.Column="1"
+                ItemsSource="{Binding MainViewModel.SetupViewModel.GameTypes}"
+                SelectedItem="{Binding NewGameGameType}"
+                SelectedIndex="0"
+                Margin="5"
+                   >
+        <ComboBox.ItemTemplate>
+          <DataTemplate>
+            <StackPanel  Orientation="Horizontal" Spacing="10">
+              <Image Source="{Binding IconImage}"  Stretch="Fill" Width="24" Height="24" />
+              <TextBlock Text="{Binding Model.Name}" />
+            </StackPanel>
+          </DataTemplate>
+        </ComboBox.ItemTemplate>
+      </ComboBox>
 
         <!-- File -->
         <TextBlock Grid.Row="2" Text="File" Margin="5"/>

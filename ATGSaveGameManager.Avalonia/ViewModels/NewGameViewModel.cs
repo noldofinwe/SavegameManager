@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using ATGSaveGameManager.Avalonia;
+﻿using ATGSaveGameManager.Avalonia;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ATGSaveGameManager.ViewModel
 {
@@ -17,7 +15,7 @@ namespace ATGSaveGameManager.ViewModel
         [ObservableProperty] private string _newGameName;
         [ObservableProperty] private string _newGameFileName;
         [ObservableProperty] private string _newGameAddPlayer;
-        [ObservableProperty] private GameType _newGameGameType;
+        [ObservableProperty] private GameTypeViewModel _newGameGameType;
 
         public NewGameViewModel(MainViewModel mainViewModel) : base(mainViewModel)
         {
@@ -25,17 +23,17 @@ namespace ATGSaveGameManager.ViewModel
         }
 
         [RelayCommand]
-        public void Save()
+        public async Task Save()
         {
             var gameinfo = new GameInfoModel
             {
                 FileName = Path.GetFileName(NewGameFileName),
-                GameType = NewGameGameType.Extension,
+                GameType = NewGameGameType.Model.Extension,
                 Name = NewGameName,
                 Id = Guid.NewGuid().ToString("N"),
                 Players = NewGamePlayers.ToArray()
             };
-                    _mainViewModel.AddedNewGame(gameinfo);
+            await _mainViewModel.AddedNewGame(gameinfo);
         }
 
         [RelayCommand]
@@ -61,11 +59,11 @@ namespace ATGSaveGameManager.ViewModel
 
             if (NewGameGameType != null)
             {
-                dialog.Directory = NewGameGameType.Savegames;
+                dialog.Directory = NewGameGameType.Model.Savegames;
                 dialog.Filters.Add(new FileDialogFilter
                 {
-                    Name = $"{NewGameGameType.Extension} files",
-                    Extensions = { NewGameGameType.Extension }
+                    Name = $"{NewGameGameType.Model.Extension} files",
+                    Extensions = { NewGameGameType.Model.Extension }
                 });
             }
             else
