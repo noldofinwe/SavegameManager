@@ -40,7 +40,7 @@ public class PubSubManager
         iq.Add(pubsub);
         var result = await _client.SendIqAsync(iq);
 
-        await Publish(gameInfo.Id, XmppSerializer.ToXElement(gameInfo), "metadata");
+      //  await Publish(gameInfo.Id, XmppSerializer.ToXElement(gameInfo), "metadata");
 
     }
 
@@ -72,7 +72,8 @@ public class PubSubManager
         var iq = new Iq
         {
             Type = IqType.Set,
-            To = _pubsubService
+            To = _pubsubService,
+            Id = Guid.NewGuid().ToString("N")
         };
 
         var pubsub = new PubSub();
@@ -94,11 +95,13 @@ public class PubSubManager
         var iq = new Iq
         {
             Type = IqType.Get,
-            To = _pubsubService
+            To = _pubsubService,
+            Id = Guid.NewGuid().ToString("N")
         };
 
-        // <query xmlns='http://jabber.org/protocol/disco#items'/>
-        var query = new XElement("query", "http://jabber.org/protocol/disco#items");
+        XNamespace disco = "http://jabber.org/protocol/disco#items";
+        var query = new XElement(disco + "query");
+
         iq.Add(query);
 
         // Send IQ and get response

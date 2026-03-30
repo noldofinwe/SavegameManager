@@ -10,6 +10,7 @@ using System.Linq;
 using System.Reactive.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Avalonia.Threading;
 using XmppDotNet;
 using XmppDotNet.Extensions.Client.Presence;
 using XmppDotNet.Transport.Socket;
@@ -81,7 +82,7 @@ namespace ATGSaveGameManager.ViewModel
         {
             await _pubSubManager.CreateGame(model);
             IsCreatingNewGame = false;
-            GameOverviewViewModel.LoadGames();
+           // GameOverviewViewModel.LoadGames();
         }
 
         private async Task LoadAppSettings()
@@ -97,7 +98,7 @@ namespace ATGSaveGameManager.ViewModel
             CheckSettings();
 
             SetupViewModel.SetCurrentSettings(_appSettings);
-            GameOverviewViewModel.LoadGames();
+           // GameOverviewViewModel.LoadGames();
             if (!string.IsNullOrWhiteSpace(_appSettings.Player) && !string.IsNullOrWhiteSpace(_appSettings.Password))
                 await ConnectXmpp(_appSettings.Player, _appSettings.Password);
         }
@@ -130,7 +131,7 @@ namespace ATGSaveGameManager.ViewModel
                       .Subscribe(async v =>
                       {
 
-                          var nodes = await _pubSubManager.ListNodesAsync();
+                          LoadServerGames(await _pubSubManager.ListNodesAsync());
                           Status = "Connected";
                           // send our online presence to the server
                           await xmppClient.SendPresenceAsync(Show.Chat, "free for chat");
@@ -140,6 +141,12 @@ namespace ATGSaveGameManager.ViewModel
             // connect so the server
             Status = "Connecting";
             await xmppClient.ConnectAsync();
+
+        }
+
+        private void LoadServerGames(List<string> listNodesAsync)
+        {
+            Dispatcher.UIThread.InvokeAsync(() => { GameOverviewViewModel.LoadGames(listNodesAsync); });
 
         }
 
