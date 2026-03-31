@@ -2,15 +2,16 @@ using ATGSaveGameManager;
 using ATGSaveGameManager.Avalonia.Xmpp;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using System.Xml.Serialization;
 using XmppDotNet;
 using XmppDotNet.Xmpp;
 using XmppDotNet.Xmpp.Client;
 using XmppDotNet.Xmpp.PubSub;
 using Configure = XmppDotNet.Xmpp.PubSub.Owner.Configure;
 using Delete = XmppDotNet.Xmpp.PubSub.Owner.Delete;
-using PubSub = XmppDotNet.Xmpp.PubSub.Owner.PubSub;
 
 public class PubSubManager
 {
@@ -43,7 +44,7 @@ public class PubSubManager
         iq.Add(pubsub);
         var result = await _client.SendIqAsync(iq);
 
-      //  await Publish(gameInfo.Id, XmppSerializer.ToXElement(gameInfo), "metadata");
+        await Publish(gameInfo.Id, XmppSerializer.ToXElement(gameInfo), "metadata");
 
     }
 
@@ -126,7 +127,66 @@ public class PubSubManager
             }
         }
 
+        foreach (var node in result)
+        {
+            var game = GetMetadata(node);
+        }
         return result;
+    }
+
+    private async Task<GameInfoModel> GetMetadata(string node)
+    {
+        var iq = new Iq
+        {
+            Type = IqType.Get,
+            To = _pubsubService,
+            Id = Guid.NewGuid().ToString("N")
+        };
+        
+        var pubsub = new PubSub();
+
+        var items = new Items()
+        {
+            Node = node
+        };
+        var metadataItem = new Item()
+        {
+            Id = "metadata"
+        };
+        
+        items.Add(metadataItem);
+        pubsub.Add(items);
+        
+        iq.Add(pubsub);
+        
+        var result = await _client.SendIqAsync(iq);
+
+        return GetGameInfo(result);
+    }
+
+    private GameInfoModel GetGameInfo(Iq result)
+    {
+        XNamespace nsPubSub = "http://jabber.org/protocol/pubsub";
+
+// Step 1: navigate to the <item>
+        var pubsub = result.Element(nsPubSub + "pubsub");
+        var items = pubsub?.Element(nsPubSub + "items");
+        var item = items?.Element(nsPubSub + "item");
+
+// Step 2: extract the payload element
+        var gameInfoElement = item?.Elements().FirstOrDefault();
+        if (gameInfoElement == null)
+            return null; // or throw
+
+// Step 3: deserialize
+
+        var serializer = new XmlSerializer(typeof(GameInfoModel));
+        using var reader = gameInfoElement.CreateReader();
+        var model = (GameInfoModel)serializer.Deserialize(reader);
+
+// model now contains your metadata
+        return model;
+
     }
 
 
