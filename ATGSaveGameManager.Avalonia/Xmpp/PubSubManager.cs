@@ -8,6 +8,9 @@ using XmppDotNet;
 using XmppDotNet.Xmpp;
 using XmppDotNet.Xmpp.Client;
 using XmppDotNet.Xmpp.PubSub;
+using Configure = XmppDotNet.Xmpp.PubSub.Owner.Configure;
+using Delete = XmppDotNet.Xmpp.PubSub.Owner.Delete;
+using PubSub = XmppDotNet.Xmpp.PubSub.Owner.PubSub;
 
 public class PubSubManager
 {
@@ -127,6 +130,29 @@ public class PubSubManager
     }
 
 
+    public async Task DeleteNode(string id)
+    {
+        // <iq type='set' to='pubsub.example.com' id='delete1'>
+        //     <pubsub xmlns='http://jabber.org/protocol/pubsub#owner'>
+        //     <delete node='shadow-empire/game-1234'/>
+        //     </pubsub>
+        //     </iq>
+            
+            var iq = new Iq
+        {
+            Type = IqType.Set,
+            To = _pubsubService,
+            Id = Guid.NewGuid().ToString("N")
+        };
+
+        var pubsub = new PubSub();
+        var publish = new Delete { Node = id };
+        
+        pubsub.Add(publish);
+        iq.Add(pubsub);
+
+        var result = await _client.SendIqAsync(iq);
+    }
 }
 
 public class PubSubItemEventArgs : EventArgs

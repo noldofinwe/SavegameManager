@@ -229,5 +229,9 @@ namespace ATGSaveGameManager.ViewModel
             SetupViewModel.SetCurrentSettings(_appSettings);
         }
 
+        public async Task DeleteNode(string id)
+        {
+            await _pubSubManager.DeleteNode(id);
+        }
     }
 }

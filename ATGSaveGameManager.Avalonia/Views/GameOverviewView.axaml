@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:atgSaveGameManager="clr-namespace:ATGSaveGameManager"
              xmlns:viewModel="clr-namespace:ATGSaveGameManager.ViewModel"
+             xmlns:views="clr-namespace:ATGSaveGameManager.Avalonia.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:DataType="viewModel:GameOverviewViewModel"
              x:Class="ATGSaveGameManager.Avalonia.Views.GameOverviewView">
@@ -83,6 +84,16 @@
                 <DataTemplate>
                     <CheckBox IsChecked="{Binding IsPlayer}"
                               IsEnabled="False"/>
+                </DataTemplate>
+            </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+        <DataGridTemplateColumn Header="Delete">
+            <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                    <Button Content="Delete"
+                            Command="{Binding ((viewModel:GameOverviewViewModel)DataContext).Delete,
+                                      RelativeSource={RelativeSource AncestorType=views:GameOverviewView}}"
+                            CommandParameter="{Binding Model.Id}" />
                 </DataTemplate>
             </DataGridTemplateColumn.CellTemplate>
         </DataGridTemplateColumn>

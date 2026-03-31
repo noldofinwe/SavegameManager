@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading.Tasks;
 using ATGSaveGameManager.Azure;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -31,6 +32,12 @@ namespace ATGSaveGameManager.ViewModel
             GameList = new ObservableCollection<GameInfoViewModel>();
         }
 
+        [RelayCommand]
+        public async Task Delete(string id)
+        {
+            await _mainViewModel.DeleteNode(id);
+        }
+        
         public void LoadGames(List<string> nodes)
         {
              GameList.Clear();
