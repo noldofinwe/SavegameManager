@@ -1,5 +1,6 @@
 ﻿using ATGSaveGameManager.Avalonia.ViewModels;
 using ATGSaveGameManager.Configuration;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
@@ -10,7 +11,6 @@ using System.Linq;
 using System.Reactive.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Avalonia.Threading;
 using XmppDotNet;
 using XmppDotNet.Extensions.Client.Presence;
 using XmppDotNet.Transport.Socket;
@@ -65,7 +65,6 @@ namespace ATGSaveGameManager.ViewModel
         }
 
 
-
         public async Task InitializeAsync()
         {
             await LoadAppSettings();
@@ -78,11 +77,11 @@ namespace ATGSaveGameManager.ViewModel
             IsSetup = true;
         }
 
-        internal async Task AddedNewGame(GameInfoModel model)
+        internal async Task AddedNewGame(GameInfoModel model, GameType gameType)
         {
-            await _pubSubManager.CreateGame(model);
+            await _pubSubManager.CreateGame(model, gameType);
             IsCreatingNewGame = false;
-           // GameOverviewViewModel.LoadGames();
+            // GameOverviewViewModel.LoadGames();
         }
 
         private async Task LoadAppSettings()
@@ -98,7 +97,7 @@ namespace ATGSaveGameManager.ViewModel
             CheckSettings();
 
             SetupViewModel.SetCurrentSettings(_appSettings);
-           // GameOverviewViewModel.LoadGames();
+            // GameOverviewViewModel.LoadGames();
             if (!string.IsNullOrWhiteSpace(_appSettings.Player) && !string.IsNullOrWhiteSpace(_appSettings.Password))
                 await ConnectXmpp(_appSettings.Player, _appSettings.Password);
         }
@@ -144,7 +143,7 @@ namespace ATGSaveGameManager.ViewModel
 
         }
 
-        private void LoadServerGames(List<string> listNodesAsync)
+        private void LoadServerGames(List<GameInfoModel> listNodesAsync)
         {
             Dispatcher.UIThread.InvokeAsync(() => { GameOverviewViewModel.LoadGames(listNodesAsync); });
 

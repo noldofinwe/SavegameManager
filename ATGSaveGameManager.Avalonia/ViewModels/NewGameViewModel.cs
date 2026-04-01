@@ -33,7 +33,7 @@ namespace ATGSaveGameManager.ViewModel
                 Id = Guid.NewGuid().ToString("N"),
                 Players = NewGamePlayers.ToArray()
             };
-            await _mainViewModel.AddedNewGame(gameinfo);
+            await _mainViewModel.AddedNewGame(gameinfo, NewGameGameType.Model);
         }
 
         [RelayCommand]

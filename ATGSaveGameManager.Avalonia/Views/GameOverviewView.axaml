@@ -63,10 +63,10 @@
                             Binding="{Binding File.FileStatus,
                                               Converter={StaticResource DefaultEnumToStringConverter}}" />
 
-        <!-- Current turn -->
+        <!-- Current turn --><!--
         <DataGridTextColumn Header="Current turn"
                             Width="75"
-                            Binding="{Binding Model.CurrentTurn}" />
+                            Binding="{Binding Model.CurrentTurn}" />-->
 
         <!-- Current player -->
         <DataGridTextColumn Header="Current player"

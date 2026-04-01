@@ -1,13 +1,13 @@
-﻿using System.Linq;
-using ATGSaveGameManager.Avalonia.ViewModels;
+﻿using ATGSaveGameManager.Avalonia.ViewModels;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
+using System.Linq;
 
 namespace ATGSaveGameManager.ViewModel
 {
     public partial class GameInfoViewModel : ViewModelBase
     {
-        private string _player;
+        private readonly string _player;
 
         public GameInfoViewModel(GameInfoModel model, string player)
         {
@@ -19,9 +19,9 @@ namespace ATGSaveGameManager.ViewModel
         private GameInfoModel _model;
 
 
-      
 
-        public string LastTurnTimeString => Model.LastTurnTime.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss");
+
+        public string LastTurnTimeString => Model.GameTurnModel.LastTurnTime.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss");
 
         public string NextPlayer
         {
@@ -29,7 +29,7 @@ namespace ATGSaveGameManager.ViewModel
             {
                 var list = Model.Players.ToList();
 
-                var index = list.IndexOf(Model.LastPlayer);
+                var index = list.IndexOf(Model.GameTurnModel.LastPlayer);
 
                 string next;
                 if (index + 1 < list.Count)

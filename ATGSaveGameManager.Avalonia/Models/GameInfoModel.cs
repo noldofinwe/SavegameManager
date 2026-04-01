@@ -1,6 +1,4 @@
-﻿
-
-using System;
+﻿using ATGSaveGameManager.Avalonia.Models;
 
 namespace ATGSaveGameManager
 {
@@ -12,11 +10,8 @@ namespace ATGSaveGameManager
         public string FileName { get; set; }
 
         public string[] Players { get; set; }
-        public string LastPlayer { get; set; }
-
-        public int? CurrentTurn { get; set; }
-        public DateTime LastTurnTime { get; set; }
-        
         public string GameType { get; set; }
+
+        public GameTurnModel GameTurnModel { get; set; }
     }
 }

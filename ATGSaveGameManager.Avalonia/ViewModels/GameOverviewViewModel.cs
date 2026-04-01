@@ -1,28 +1,24 @@
-﻿using System;
+﻿using Avalonia.Media.Imaging;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
-using ATGSaveGameManager.Azure;
-using Avalonia.Media.Imaging;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 
 namespace ATGSaveGameManager.ViewModel
 {
     public partial class GameOverviewViewModel : PbemViewModelBase
     {
-        private ConcurrentDictionary<string, FileInfoModel> files = new ConcurrentDictionary<string, FileInfoModel>();
+        private readonly ConcurrentDictionary<string, FileInfoModel> files = new ConcurrentDictionary<string, FileInfoModel>();
 
-        private ConcurrentDictionary<string, FileInfoModel> remoteFiles =
+        private readonly ConcurrentDictionary<string, FileInfoModel> remoteFiles =
             new ConcurrentDictionary<string, FileInfoModel>();
 
-        private List<string> remoteGames = new List<string>();
+        private readonly List<string> remoteGames = new List<string>();
 
-        [ObservableProperty] 
+        [ObservableProperty]
         private ObservableCollection<GameInfoViewModel> _gameList = [];
 
         [ObservableProperty] private string _lastSyncTime;
@@ -37,33 +33,35 @@ namespace ATGSaveGameManager.ViewModel
         {
             await _mainViewModel.DeleteNode(id);
         }
-        
-        public void LoadGames(List<string> nodes)
+
+        public void LoadGames(List<GameInfoModel> nodes)
         {
-             GameList.Clear();
+            GameList.Clear();
 
             foreach (var node in nodes)
             {
-                var gameType = _mainViewModel.GameTypes.FirstOrDefault();
-                var model = new GameInfoModel();
-                model.Name = "<generated temp>";
-                model.Id = node;
-                model.CurrentTurn = 0;
-                model.Players = new[] { "Michel" };
-                var gameInfoViewModel = new GameInfoViewModel(model, _mainViewModel.PlayerName);
-
+                var gameType = _mainViewModel.GameTypes.FirstOrDefault(x => x.Name == node.GameType);
                 if (gameType != null)
                 {
-                    gameInfoViewModel.GameTypeObject = gameType;
-                    gameInfoViewModel.IconImage = new Bitmap(gameType.Icon);
+                    var model = new GameInfoModel();
+                    model.Name = node.Name;
+                    model.Id = node.Id;
+                    model.Players = node.Players;
+                    var gameInfoViewModel = new GameInfoViewModel(model, _mainViewModel.PlayerName);
+
+                    if (gameType != null)
+                    {
+                        gameInfoViewModel.GameTypeObject = gameType;
+                        gameInfoViewModel.IconImage = new Bitmap(gameType.Icon);
+                    }
+
+                    // if (files.ContainsKey(info.FileName))
+                    // {
+                    //     gameInfoViewModel.File = files[info.FileName];
+                    // }
+
+                    GameList.Add(gameInfoViewModel);
                 }
-
-                // if (files.ContainsKey(info.FileName))
-                // {
-                //     gameInfoViewModel.File = files[info.FileName];
-                // }
-
-                GameList.Add(gameInfoViewModel);
             }
         }
     }
