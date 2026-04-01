@@ -81,7 +81,7 @@ namespace ATGSaveGameManager.ViewModel
         {
             await _pubSubManager.CreateGame(model, gameType);
             IsCreatingNewGame = false;
-            // GameOverviewViewModel.LoadGames();
+            LoadServerGames(await _pubSubManager.ListNodesAsync());
         }
 
         private async Task LoadAppSettings()

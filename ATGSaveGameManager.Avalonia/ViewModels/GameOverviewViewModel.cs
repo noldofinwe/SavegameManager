@@ -40,7 +40,7 @@ namespace ATGSaveGameManager.ViewModel
 
             foreach (var node in nodes)
             {
-                var gameType = _mainViewModel.GameTypes.FirstOrDefault(x => x.Name == node.GameType);
+                var gameType = _mainViewModel.GameTypes.FirstOrDefault(x => x.Extension == node.GameType);
                 if (gameType != null)
                 {
                     var model = new GameInfoModel();
