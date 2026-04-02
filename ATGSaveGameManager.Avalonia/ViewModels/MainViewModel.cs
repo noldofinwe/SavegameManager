@@ -1,4 +1,5 @@
-﻿using ATGSaveGameManager.Avalonia.ViewModels;
+﻿using ATGSaveGameManager.Avalonia.Models;
+using ATGSaveGameManager.Avalonia.ViewModels;
 using ATGSaveGameManager.Configuration;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -11,10 +12,13 @@ using System.Linq;
 using System.Reactive.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using System.Xml.Serialization;
 using XmppDotNet;
 using XmppDotNet.Extensions.Client.Presence;
 using XmppDotNet.Transport.Socket;
 using XmppDotNet.Xmpp;
+using XmppDotNet.Xmpp.Client;
 
 namespace ATGSaveGameManager.ViewModel
 {
@@ -137,6 +141,37 @@ namespace ATGSaveGameManager.ViewModel
 
                       });
 
+            XNamespace nsPubSub = "http://jabber.org/protocol/pubsub#event";
+
+            xmppClient
+              .XmppXElementReceived
+                .Where(el => el is Message msg &&
+                             msg.Element(nsPubSub + "event") != null)
+                  .Subscribe(el =>
+                  {
+                      var msg = (Message)el;
+
+                      var ev = msg.Element(nsPubSub + "event");
+
+                      var items = ev?.Element(nsPubSub + "items");
+                      var item = items?.Element(nsPubSub + "item");
+
+                      // Step 2: extract the payload element
+                      var gameInfoElement = item?.Elements().FirstOrDefault();
+
+                      if (gameInfoElement != null)
+                      {
+                          if (gameInfoElement.Name.LocalName == nameof(GameTurnModel))
+                          {
+
+                              // Step 3: deserialize
+
+                              var serializer = new XmlSerializer(typeof(GameTurnModel));
+                              using var reader = gameInfoElement.CreateReader();
+                              var model = (GameTurnModel)serializer.Deserialize(reader);
+                          }
+                      }
+                  });
             // connect so the server
             Status = "Connecting";
             await xmppClient.ConnectAsync();
@@ -231,6 +266,25 @@ namespace ATGSaveGameManager.ViewModel
         public async Task DeleteNode(string id)
         {
             await _pubSubManager.DeleteNode(id);
+            LoadServerGames(await _pubSubManager.ListNodesAsync());
+        }
+
+        internal async Task SubscribeToNode(string id)
+        {
+            await _pubSubManager.Subscribe(id);
+            LoadServerGames(await _pubSubManager.ListNodesAsync());
+
+        }
+
+        internal async Task UpdateNode(string id)
+        {
+            var game = GameOverviewViewModel.GameList.FirstOrDefault(x => x.Model.Id == id);
+            if (game != null)
+            {
+                var type = game.GameTypeObject;
+
+                await _pubSubManager.UploadGameTurn(game.Model, type);
+            }
         }
     }
 }

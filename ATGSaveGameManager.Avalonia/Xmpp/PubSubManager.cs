@@ -52,6 +52,11 @@ public class PubSubManager
 
         await Publish(gameInfo.Id, XmppSerializer.ToXElement(gameInfo), "metadata");
 
+        await UploadGameTurn(gameInfo, type);
+    }
+
+    public async Task UploadGameTurn(GameInfoModel gameInfo, GameType type)
+    {
         var path = Path.Combine(type.Savegames, gameInfo.FileName);
 
         var fileInfo = new FileInfo(path);
@@ -71,8 +76,7 @@ public class PubSubManager
         await Publish(gameInfo.Id, XmppSerializer.ToXElement(gameTurn), "turns");
     }
 
-
-    public async Task<string> GetUploadUrl(string fileName, int length)
+    private async Task<string> GetUploadUrl(string fileName, int length)
     {
         //    < iq type = 'get' to = 'upload.yourserver.net' id = 'upload1' >
         //  < request xmlns = 'urn:xmpp:http:upload:0'
@@ -120,7 +124,7 @@ public class PubSubManager
     }
 
 
-    public async Task UploadSaveFileAsync(string putUrl, string filePath)
+    private async Task UploadSaveFileAsync(string putUrl, string filePath)
     {
         using var http = new HttpClient();
         var bytes = await File.ReadAllBytesAsync(filePath);
@@ -133,25 +137,26 @@ public class PubSubManager
     }
 
     // ----------------- Subscribe -----------------
-    public void Subscribe(string node)
+    public async Task Subscribe(string node)
     {
         var iq = new Iq
         {
             Type = IqType.Set,
-            To = _pubsubService
+            To = _pubsubService,
+            Id = Guid.NewGuid().ToString("N")
         };
 
         var pubsub = new PubSub();
         var subscribe = new Subscribe
         {
-            Node = node,
+            Node = "game/" + node,
             Jid = _client.Jid
         };
 
         pubsub.Add(subscribe);
         iq.Add(pubsub);
 
-        _client.SendIqAsync(iq);
+        var result = await _client.SendIqAsync(iq);
     }
 
     // ----------------- Publish -----------------
@@ -215,6 +220,8 @@ public class PubSubManager
         foreach (var node in result)
         {
             var game = await GetMetadata(node);
+            var turn = await GetLastTurns(node);
+            game.GameTurnModel = turn;
             games.Add(game);
         }
         return games;
@@ -250,6 +257,39 @@ public class PubSubManager
         return GetGameInfo(result);
     }
 
+
+    private async Task<GameTurnModel> GetLastTurns(string node)
+    {
+        var iq = new Iq
+        {
+            Type = IqType.Get,
+            To = _pubsubService,
+            Id = Guid.NewGuid().ToString("N")
+        };
+
+        var pubsub = new PubSub();
+
+        var items = new Items()
+        {
+            Node = node,
+            MaxItems = 1
+        };
+        var metadataItem = new Item()
+        {
+            Id = "turns"
+        };
+
+        items.Add(metadataItem);
+        pubsub.Add(items);
+
+        iq.Add(pubsub);
+
+        var result = await _client.SendIqAsync(iq);
+
+        return GetGameTurn(result);
+    }
+
+
     private GameInfoModel GetGameInfo(Iq result)
     {
         XNamespace nsPubSub = "http://jabber.org/protocol/pubsub";
@@ -275,7 +315,30 @@ public class PubSubManager
 
     }
 
+    private GameTurnModel GetGameTurn(Iq result)
+    {
+        XNamespace nsPubSub = "http://jabber.org/protocol/pubsub";
 
+        // Step 1: navigate to the <item>
+        var pubsub = result.Element(nsPubSub + "pubsub");
+        var items = pubsub?.Element(nsPubSub + "items");
+        var item = items?.Element(nsPubSub + "item");
+
+        // Step 2: extract the payload element
+        var gameInfoElement = item?.Elements().FirstOrDefault();
+        if (gameInfoElement == null)
+            return null; // or throw
+
+        // Step 3: deserialize
+
+        var serializer = new XmlSerializer(typeof(GameTurnModel));
+        using var reader = gameInfoElement.CreateReader();
+        var model = (GameTurnModel)serializer.Deserialize(reader);
+
+        // model now contains your metadata
+        return model;
+
+    }
     public async Task DeleteNode(string id)
     {
         // <iq type='set' to='pubsub.example.com' id='delete1'>
@@ -291,8 +354,8 @@ public class PubSubManager
             Id = Guid.NewGuid().ToString("N")
         };
 
-        var pubsub = new PubSub();
-        var publish = new Delete { Node = id };
+        var pubsub = new XmppDotNet.Xmpp.PubSub.Owner.PubSub();
+        var publish = new Delete { Node = "game/" + id };
 
         pubsub.Add(publish);
         iq.Add(pubsub);

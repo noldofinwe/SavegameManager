@@ -1,7 +1,6 @@
 ﻿using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -11,11 +10,6 @@ namespace ATGSaveGameManager.ViewModel
 {
     public partial class GameOverviewViewModel : PbemViewModelBase
     {
-        private readonly ConcurrentDictionary<string, FileInfoModel> files = new ConcurrentDictionary<string, FileInfoModel>();
-
-        private readonly ConcurrentDictionary<string, FileInfoModel> remoteFiles =
-            new ConcurrentDictionary<string, FileInfoModel>();
-
         private readonly List<string> remoteGames = new List<string>();
 
         [ObservableProperty]
@@ -32,6 +26,18 @@ namespace ATGSaveGameManager.ViewModel
         public async Task Delete(string id)
         {
             await _mainViewModel.DeleteNode(id);
+        }
+
+        [RelayCommand]
+        public async Task UploadNewFile(string id)
+        {
+
+        }
+
+        [RelayCommand]
+        public async Task SubscribeToGame(string id)
+        {
+            await _mainViewModel.SubscribeToNode(id);
         }
 
         public void LoadGames(List<GameInfoModel> nodes)

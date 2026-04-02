@@ -79,14 +79,26 @@
                             Binding="{Binding LastTurnTimeString}" />
 
         <!-- Player checkbox -->
-        <DataGridTemplateColumn Header="Player" Width="60">
-            <DataGridTemplateColumn.CellTemplate>
-                <DataTemplate>
-                    <CheckBox IsChecked="{Binding IsPlayer}"
-                              IsEnabled="False"/>
-                </DataTemplate>
-            </DataGridTemplateColumn.CellTemplate>
-        </DataGridTemplateColumn>
+      <DataGridTemplateColumn Header="Subscribe">
+        <DataGridTemplateColumn.CellTemplate>
+          <DataTemplate>
+            <Button Content="Subscribe"
+                    Command="{Binding ((viewModel:GameOverviewViewModel)DataContext).SubscribeToGame,
+                                      RelativeSource={RelativeSource AncestorType=views:GameOverviewView}}"
+                    CommandParameter="{Binding Model.Id}" />
+          </DataTemplate>
+        </DataGridTemplateColumn.CellTemplate>
+      </DataGridTemplateColumn>
+      <DataGridTemplateColumn Header="Finish Turn">
+        <DataGridTemplateColumn.CellTemplate>
+          <DataTemplate>
+            <Button Content="Upload"
+                    Command="{Binding ((viewModel:GameOverviewViewModel)DataContext).UploadNewFile,
+                                      RelativeSource={RelativeSource AncestorType=views:GameOverviewView}}"
+                    CommandParameter="{Binding Model.Id}" />
+          </DataTemplate>
+        </DataGridTemplateColumn.CellTemplate>
+      </DataGridTemplateColumn>
         <DataGridTemplateColumn Header="Delete">
             <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate>

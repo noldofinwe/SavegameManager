@@ -7,6 +7,7 @@ namespace ATGSaveGameManager.ViewModel
 {
     public partial class GameInfoViewModel : ViewModelBase
     {
+
         private readonly string _player;
 
         public GameInfoViewModel(GameInfoModel model, string player)
@@ -21,12 +22,16 @@ namespace ATGSaveGameManager.ViewModel
 
 
 
-        public string LastTurnTimeString => Model.GameTurnModel.LastTurnTime.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss");
+        public string LastTurnTimeString => Model.GameTurnModel == null ? "Unknown" : Model.GameTurnModel.LastTurnTime.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss");
 
         public string NextPlayer
         {
             get
             {
+                if (Model.GameTurnModel == null)
+                {
+                    return "Unknown";
+                }
                 var list = Model.Players.ToList();
 
                 var index = list.IndexOf(Model.GameTurnModel.LastPlayer);
