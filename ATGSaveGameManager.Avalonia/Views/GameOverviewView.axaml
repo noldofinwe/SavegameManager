@@ -60,8 +60,7 @@
         <!-- Sync status -->
         <DataGridTextColumn Header="Sync status"
                             Width="125"
-                            Binding="{Binding File.FileStatus,
-                                              Converter={StaticResource DefaultEnumToStringConverter}}" />
+                            Binding="{Binding Status}" />
 
         <!-- Current turn --><!--
         <DataGridTextColumn Header="Current turn"
@@ -109,6 +108,16 @@
                 </DataTemplate>
             </DataGridTemplateColumn.CellTemplate>
         </DataGridTemplateColumn>
+      <DataGridTemplateColumn Header="Download">
+        <DataGridTemplateColumn.CellTemplate>
+          <DataTemplate>
+            <Button Content="Delete"
+                    Command="{Binding ((viewModel:GameOverviewViewModel)DataContext).Download,
+                                      RelativeSource={RelativeSource AncestorType=views:GameOverviewView}}"
+                    CommandParameter="{Binding Model.Id}" />
+          </DataTemplate>
+        </DataGridTemplateColumn.CellTemplate>
+      </DataGridTemplateColumn>
 
     </DataGrid.Columns>
 </DataGrid>

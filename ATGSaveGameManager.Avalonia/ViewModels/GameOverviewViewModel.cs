@@ -31,6 +31,7 @@ namespace ATGSaveGameManager.ViewModel
         [RelayCommand]
         public async Task UploadNewFile(string id)
         {
+            await _mainViewModel.UpdateNode(id);
 
         }
 
@@ -38,6 +39,12 @@ namespace ATGSaveGameManager.ViewModel
         public async Task SubscribeToGame(string id)
         {
             await _mainViewModel.SubscribeToNode(id);
+        }
+
+        [RelayCommand]
+        public async Task Download(string id)
+        {
+            await _mainViewModel.Download(id);
         }
 
         public void LoadGames(List<GameInfoModel> nodes)
@@ -52,14 +59,16 @@ namespace ATGSaveGameManager.ViewModel
                     var model = new GameInfoModel();
                     model.Name = node.Name;
                     model.Id = node.Id;
+                    model.FileName = node.FileName;
+                    model.GameTurnModel = node.GameTurnModel;
                     model.Players = node.Players;
                     var gameInfoViewModel = new GameInfoViewModel(model, _mainViewModel.PlayerName);
+                    gameInfoViewModel.Status = "Synced";
+                    model.GameType = gameType.Name;
 
-                    if (gameType != null)
-                    {
-                        gameInfoViewModel.GameTypeObject = gameType;
-                        gameInfoViewModel.IconImage = new Bitmap(gameType.Icon);
-                    }
+                    gameInfoViewModel.GameTypeObject = gameType;
+                    gameInfoViewModel.IconImage = new Bitmap(gameType.Icon);
+
 
                     // if (files.ContainsKey(info.FileName))
                     // {

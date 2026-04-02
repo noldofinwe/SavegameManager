@@ -19,8 +19,8 @@ namespace ATGSaveGameManager.ViewModel
         [ObservableProperty]
         private GameInfoModel _model;
 
-
-
+        [ObservableProperty]
+        private string _status;
 
         public string LastTurnTimeString => Model.GameTurnModel == null ? "Unknown" : Model.GameTurnModel.LastTurnTime.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss");
 

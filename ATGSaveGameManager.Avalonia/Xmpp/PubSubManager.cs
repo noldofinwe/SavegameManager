@@ -3,6 +3,7 @@ using ATGSaveGameManager.Avalonia.Models;
 using ATGSaveGameManager.Avalonia.Xmpp;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -52,10 +53,10 @@ public class PubSubManager
 
         await Publish(gameInfo.Id, XmppSerializer.ToXElement(gameInfo), "metadata");
 
-        await UploadGameTurn(gameInfo, type);
+        await UploadGameTurn(gameInfo, type, gameInfo.Players[0]);
     }
 
-    public async Task UploadGameTurn(GameInfoModel gameInfo, GameType type)
+    public async Task UploadGameTurn(GameInfoModel gameInfo, GameType type, string player)
     {
         var path = Path.Combine(type.Savegames, gameInfo.FileName);
 
@@ -68,7 +69,7 @@ public class PubSubManager
 
         var gameTurn = new GameTurnModel
         {
-            LastPlayer = gameInfo.Players[0],
+            LastPlayer = player,
             LastTurnTime = DateTime.Now,
             Url = uploadUrl,
         };
@@ -362,8 +363,28 @@ public class PubSubManager
 
         var result = await _client.SendIqAsync(iq);
     }
-}
 
+    internal async Task DownloadFile(GameInfoModel model, GameType type)
+    {
+        var url = model.GameTurnModel.Url;
+
+        using var http = new HttpClient();
+
+        using var response = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+        response.EnsureSuccessStatusCode();
+
+        // Where do we store it?
+
+        var destination = Path.Combine(type.Savegames, model.FileName);
+
+        await using var remote = await response.Content.ReadAsStreamAsync();
+        await using var local = File.Create(destination);
+
+        await remote.CopyToAsync(local);
+
+        Debug.WriteLine($"Saved: {destination}");
+    }
+}
 public class PubSubItemEventArgs : EventArgs
 {
     public string Node { get; }

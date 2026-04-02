@@ -13,7 +13,6 @@ using System.Reactive.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using System.Xml.Serialization;
 using XmppDotNet;
 using XmppDotNet.Extensions.Client.Presence;
 using XmppDotNet.Transport.Socket;
@@ -147,7 +146,7 @@ namespace ATGSaveGameManager.ViewModel
               .XmppXElementReceived
                 .Where(el => el is Message msg &&
                              msg.Element(nsPubSub + "event") != null)
-                  .Subscribe(el =>
+                  .Subscribe(async el =>
                   {
                       var msg = (Message)el;
 
@@ -163,12 +162,7 @@ namespace ATGSaveGameManager.ViewModel
                       {
                           if (gameInfoElement.Name.LocalName == nameof(GameTurnModel))
                           {
-
-                              // Step 3: deserialize
-
-                              var serializer = new XmlSerializer(typeof(GameTurnModel));
-                              using var reader = gameInfoElement.CreateReader();
-                              var model = (GameTurnModel)serializer.Deserialize(reader);
+                              LoadServerGames(await _pubSubManager.ListNodesAsync());
                           }
                       }
                   });
@@ -269,6 +263,21 @@ namespace ATGSaveGameManager.ViewModel
             LoadServerGames(await _pubSubManager.ListNodesAsync());
         }
 
+        public async Task Download(string id)
+        {
+            var game = GameOverviewViewModel.GameList.FirstOrDefault(x => x.Model.Id == id);
+            if (game != null)
+            {
+                var type = game.GameTypeObject;
+
+                await _pubSubManager.DownloadFile(game.Model, type);
+                game.Status = "Downloaded";
+            }
+
+
+        }
+
+
         internal async Task SubscribeToNode(string id)
         {
             await _pubSubManager.Subscribe(id);
@@ -283,7 +292,8 @@ namespace ATGSaveGameManager.ViewModel
             {
                 var type = game.GameTypeObject;
 
-                await _pubSubManager.UploadGameTurn(game.Model, type);
+                await _pubSubManager.UploadGameTurn(game.Model, type, game.NextPlayer);
+                game.Status = "Uploaded";
             }
         }
     }
