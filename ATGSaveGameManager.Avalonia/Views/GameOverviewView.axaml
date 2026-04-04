@@ -114,7 +114,7 @@
       <DataGridTemplateColumn Header="Download">
         <DataGridTemplateColumn.CellTemplate>
           <DataTemplate>
-            <Button Content="Delete"
+            <Button Content="Download"
                     Command="{Binding ((viewModel:GameOverviewViewModel)DataContext).Download,
                                       RelativeSource={RelativeSource AncestorType=views:GameOverviewView}}"
                     CommandParameter="{Binding Model.Id}" />
