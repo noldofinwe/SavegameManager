@@ -98,14 +98,13 @@ namespace ATGSaveGameManager.ViewModel
         {
             SelectedGameTypeViewModel = null;
         }
-
-        [RelayCommand]
-        public void SetCurrentSettings(AppSettings appSettings)
+        
+        public void SetCurrentSettings(AppSettings appSettings, string password)
         {
             GameTypes.Clear();
             Cancel();
             SelectedPlayerName = appSettings.Player;
-            SelectedConnection = appSettings.Password;
+            SelectedConnection = password;
 
             if (appSettings?.GamesTypes != null)
             {

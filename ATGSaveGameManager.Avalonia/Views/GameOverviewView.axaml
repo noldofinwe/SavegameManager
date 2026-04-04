@@ -81,10 +81,13 @@
       <DataGridTemplateColumn Header="Subscribe">
         <DataGridTemplateColumn.CellTemplate>
           <DataTemplate>
-            <Button Content="Subscribe"
-                    Command="{Binding ((viewModel:GameOverviewViewModel)DataContext).SubscribeToGame,
+              <StackPanel>
+              <Button Content="Subscribe" IsVisible="{Binding !Model.Subscribed}"
+                      Command="{Binding ((viewModel:GameOverviewViewModel)DataContext).SubscribeToGame,
                                       RelativeSource={RelativeSource AncestorType=views:GameOverviewView}}"
-                    CommandParameter="{Binding Model.Id}" />
+                      CommandParameter="{Binding Model.Id}" />
+              <CheckBox IsVisible="{Binding Model.Subscribed}" IsChecked="True" IsEnabled="False"></CheckBox>
+              </StackPanel>
           </DataTemplate>
         </DataGridTemplateColumn.CellTemplate>
       </DataGridTemplateColumn>

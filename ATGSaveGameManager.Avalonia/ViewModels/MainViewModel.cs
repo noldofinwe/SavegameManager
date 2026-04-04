@@ -54,6 +54,9 @@ namespace ATGSaveGameManager.ViewModel
         private readonly XmppClient _client;
         private PubSubManager _pubSubManager;
 
+
+        private ISecureStorage _secureStorage;
+        private readonly string SecretName = "ATGSaveGameManager.XmppPassword";
         public MainViewModel()
         {
             DataDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data");
@@ -64,7 +67,7 @@ namespace ATGSaveGameManager.ViewModel
             NewGameViewModel = new NewGameViewModel(this);
             SetupViewModel = new SetupViewModel(this);
             Status = "Not connected";
-
+            _secureStorage = SecureStorageFactory.Create();
         }
 
 
@@ -76,7 +79,7 @@ namespace ATGSaveGameManager.ViewModel
         [RelayCommand]
         public void OpenSettings()
         {
-            SetupViewModel.SetCurrentSettings(_appSettings);
+            // SetupViewModel.SetCurrentSettings(_appSettings);
             IsSetup = true;
         }
 
@@ -92,17 +95,18 @@ namespace ATGSaveGameManager.ViewModel
             //Status = "Loading settings";
             ReadAppSettings();
 
-            Connection = _appSettings.Password;
+            Connection = await _secureStorage.RetrieveAsync(SecretName);
             PlayerName = _appSettings.Player;
 
             GetGameTypes();
 
             CheckSettings();
 
-            SetupViewModel.SetCurrentSettings(_appSettings);
+            SetupViewModel.SetCurrentSettings(_appSettings, Connection);
             // GameOverviewViewModel.LoadGames();
-            if (!string.IsNullOrWhiteSpace(_appSettings.Player) && !string.IsNullOrWhiteSpace(_appSettings.Password))
-                await ConnectXmpp(_appSettings.Player, _appSettings.Password);
+            
+            if (!string.IsNullOrWhiteSpace(_appSettings.Player) && !string.IsNullOrWhiteSpace(Connection))
+                await ConnectXmpp(_appSettings.Player, Connection);
         }
 
         private async Task ConnectXmpp(string jid, string password)
@@ -244,7 +248,7 @@ namespace ATGSaveGameManager.ViewModel
         public async Task UpdateAppsettings(string selectedPlayerName, string selectedConnection, IEnumerable<GameType> gameTypes)
         {
             _appSettings.Player = selectedPlayerName;
-            _appSettings.Password = selectedConnection;
+            await _secureStorage.StoreAsync(SecretName, selectedConnection);
             _appSettings.GamesTypes = gameTypes.ToArray();
 
             using (var file = File.CreateText(_appsettingsName))
@@ -254,7 +258,7 @@ namespace ATGSaveGameManager.ViewModel
 
             // Reload settings
             await LoadAppSettings();
-            SetupViewModel.SetCurrentSettings(_appSettings);
+            SetupViewModel.SetCurrentSettings(_appSettings, selectedConnection);
         }
 
         public async Task DeleteNode(string id)

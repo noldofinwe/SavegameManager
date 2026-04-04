@@ -2,6 +2,7 @@
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Linq;
+using XmppDotNet;
 
 namespace ATGSaveGameManager.ViewModel
 {

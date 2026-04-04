@@ -16,8 +16,6 @@ namespace ATGSaveGameManager.Configuration
         public GameType[] GamesTypes { get; set; }
         public string Player { get; set; }
         
-        public string Jid { get; set; }
-        // Temp
-        public string Password { get; set; }    
+        public string Jid { get; set; } 
     }
 }

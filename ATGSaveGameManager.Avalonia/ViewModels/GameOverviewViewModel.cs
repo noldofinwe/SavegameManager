@@ -59,6 +59,7 @@ namespace ATGSaveGameManager.ViewModel
                     var model = new GameInfoModel();
                     model.Name = node.Name;
                     model.Id = node.Id;
+                    model.Subscribed = node.Subscribed;
                     model.FileName = node.FileName;
                     model.GameTurnModel = node.GameTurnModel;
                     model.Players = node.Players;

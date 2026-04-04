@@ -13,5 +13,6 @@ namespace ATGSaveGameManager
         public string GameType { get; set; }
 
         public GameTurnModel GameTurnModel { get; set; }
+        public bool Subscribed { get; set; }
     }
 }

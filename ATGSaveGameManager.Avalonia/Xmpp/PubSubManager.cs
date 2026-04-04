@@ -54,6 +54,8 @@ public class PubSubManager
         await Publish(gameInfo.Id, XmppSerializer.ToXElement(gameInfo), "metadata");
 
         await UploadGameTurn(gameInfo, type, gameInfo.Players[0]);
+
+        await SetPublishers(gameInfo.Id, gameInfo.Players.ToList());
     }
 
     public async Task UploadGameTurn(GameInfoModel gameInfo, GameType type, string player)
@@ -225,8 +227,79 @@ public class PubSubManager
             game.GameTurnModel = turn;
             games.Add(game);
         }
+
+        var subscriptions = await GetSubscriptions();
+
+        foreach (var subscription in subscriptions)
+        {
+            var game = games.FirstOrDefault(x => subscription.Contains(x.Id));
+            if (game != null)
+            {
+                game.Subscribed = true;
+            }
+        }
         return games;
     }
+    
+    public async Task SetPublishers(string node, List<string> jids)
+    {
+        var iq = new Iq
+        {
+            Type = IqType.Set,
+            To = _pubsubService,
+            Id = Guid.NewGuid().ToString("N")
+        };
+
+        var pubsub = new XmppDotNet.Xmpp.PubSub.Owner.PubSub();
+
+        var affiliations = new XmppDotNet.Xmpp.PubSub.Owner.Affiliations
+        {
+            Node = "game/" + node
+        };
+
+        foreach (var jid in jids)
+        {
+            affiliations.Add(new XmppDotNet.Xmpp.PubSub.Owner.Affiliation
+            {
+                Jid = jid,
+                AffiliationType = AffiliationType.Publisher
+            });
+        }
+
+        pubsub.Add(affiliations);
+        iq.Add(pubsub);
+
+        await _client.SendIqAsync(iq);
+    }
+
+    private async Task<List<string>> GetSubscriptions()
+    {
+        var iq = new Iq
+        {
+            Type = IqType.Get,
+            To = _pubsubService,
+            Id = Guid.NewGuid().ToString("N")
+        };
+
+        var pubsub = new PubSub();
+        pubsub.Add(new Subscriptions()); // no node = list all subscriptions
+        iq.Add(pubsub);
+
+        var response = await _client.SendIqAsync(iq);
+
+        XNamespace ns = "http://jabber.org/protocol/pubsub";
+
+        var subscriptions = response
+            .Element(ns + "pubsub")?
+            .Element(ns + "subscriptions")?
+            .Elements(ns + "subscription")
+            .Select(s => (string)s.Attribute("node"))
+            .Where(n => !string.IsNullOrEmpty(n))
+            .ToList();
+
+        return subscriptions ?? new List<string>();
+    }
+
 
     private async Task<GameInfoModel> GetMetadata(string node)
     {
@@ -383,18 +456,5 @@ public class PubSubManager
         await remote.CopyToAsync(local);
 
         Debug.WriteLine($"Saved: {destination}");
-    }
-}
-public class PubSubItemEventArgs : EventArgs
-{
-    public string Node { get; }
-    public string ItemId { get; }
-    public XElement Payload { get; }
-
-    public PubSubItemEventArgs(string node, string itemId, XElement payload)
-    {
-        Node = node;
-        ItemId = itemId;
-        Payload = payload;
     }
 }
