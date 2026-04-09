@@ -18,6 +18,7 @@ using XmppDotNet.Xmpp.PubSub;
 using XmppDotNet.Xmpp.XData;
 using Configure = XmppDotNet.Xmpp.PubSub.Owner.Configure;
 using Delete = XmppDotNet.Xmpp.PubSub.Owner.Delete;
+using Item = XmppDotNet.Xmpp.PubSub.Item;
 
 public class PubSubManager
 {
@@ -47,13 +48,26 @@ public class PubSubManager
         var create = new Create { Node = "game/" + gameInfo.Id };
 
         pubsub.Add(create);
-        var config = new Configure();
-        var field1 = new Field("pubsub#publish_model", "publishers");
-        var field2 = new Field("pubsub#access_model", "open");
-        config.Add(field1);
-        config.Add(field2);
 
-        pubsub.Add(config);
+        var configure = new Configure();
+
+        var x = new Data
+        {
+            Type = FormType.Submit
+        };
+
+        // Required hidden FORM_TYPE
+        x.AddField(new Field("FORM_TYPE", "http://jabber.org/protocol/pubsub#node_config", FieldType.Hidden));
+
+        // publish_model = publishers
+        x.AddField(new Field("pubsub#publish_model", "publishers"));
+
+        // access_model = open (optional)
+        x.AddField(new Field("pubsub#access_model", "open"));
+
+
+        configure.Add(x);
+        pubsub.Add(configure);
 
         iq.Add(pubsub);
         var result = await _client.SendIqAsync(iq);
