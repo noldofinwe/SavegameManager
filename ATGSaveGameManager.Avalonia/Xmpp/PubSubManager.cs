@@ -15,6 +15,7 @@ using XmppDotNet.Xmpp;
 using XmppDotNet.Xmpp.Client;
 using XmppDotNet.Xmpp.HttpUpload;
 using XmppDotNet.Xmpp.PubSub;
+using XmppDotNet.Xmpp.XData;
 using Configure = XmppDotNet.Xmpp.PubSub.Owner.Configure;
 using Delete = XmppDotNet.Xmpp.PubSub.Owner.Delete;
 
@@ -46,7 +47,13 @@ public class PubSubManager
         var create = new Create { Node = "game/" + gameInfo.Id };
 
         pubsub.Add(create);
-        pubsub.Add(new Configure());   // optional: default config
+        var config = new Configure();
+        var field1 = new Field("pubsub#publish_model", "publishers");
+        var field2 = new Field("pubsub#access_model", "open");
+        config.Add(field1);
+        config.Add(field2);
+
+        pubsub.Add(config);
 
         iq.Add(pubsub);
         var result = await _client.SendIqAsync(iq);
@@ -240,7 +247,7 @@ public class PubSubManager
         }
         return games;
     }
-    
+
     public async Task SetPublishers(string node, List<string> jids)
     {
         var iq = new Iq
