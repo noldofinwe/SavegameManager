@@ -47,7 +47,8 @@ namespace ATGSaveGameManager.ViewModel
         {
             if (!string.IsNullOrWhiteSpace(NewGameAddPlayer))
             {
-                NewGamePlayers.Add(NewGameAddPlayer);
+                var player = NewGameAddPlayer + "@bobbinhold.net";
+                NewGamePlayers.Add(player);
                 NewGameAddPlayer = "";
             }
         }

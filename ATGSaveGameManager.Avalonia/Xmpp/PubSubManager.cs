@@ -16,6 +16,7 @@ using XmppDotNet.Xmpp.Client;
 using XmppDotNet.Xmpp.HttpUpload;
 using XmppDotNet.Xmpp.PubSub;
 using XmppDotNet.Xmpp.XData;
+using Affiliations = XmppDotNet.Xmpp.PubSub.Owner.Affiliations;
 using Configure = XmppDotNet.Xmpp.PubSub.Owner.Configure;
 using Delete = XmppDotNet.Xmpp.PubSub.Owner.Delete;
 using Item = XmppDotNet.Xmpp.PubSub.Item;
@@ -44,12 +45,11 @@ public class PubSubManager
             Id = Guid.NewGuid().ToString("N")
         };
 
-        var pubsub = new PubSub();
+        var pubsub =  new PubSub();
         var create = new Create { Node = "game/" + gameInfo.Id };
-
         pubsub.Add(create);
 
-        var configure = new Configure();
+        var configure = new XmppDotNet.Xmpp.PubSub.Configure();
 
         var x = new Data
         {
@@ -68,7 +68,6 @@ public class PubSubManager
 
         configure.Add(x);
         pubsub.Add(configure);
-
         iq.Add(pubsub);
         var result = await _client.SendIqAsync(iq);
 
@@ -77,6 +76,29 @@ public class PubSubManager
         await UploadGameTurn(gameInfo, type, gameInfo.Players[0]);
 
         await SetPublishers(gameInfo.Id, gameInfo.Players.ToList());
+
+        await TestAffiliations(gameInfo.Id);
+    }
+
+    private async Task TestAffiliations(string gameInfoId)
+    {
+        var iq = new Iq
+        {
+            Type = IqType.Get,
+            To = _pubsubService,
+            Id = Guid.NewGuid().ToString("N")
+        };
+
+        var pubsub =  new XmppDotNet.Xmpp.PubSub.Owner.PubSub();
+        var create = new Affiliations
+        {
+            Node = "game/" + gameInfoId,
+        };
+        pubsub.Add(create);
+        iq.Add(pubsub);
+        var result = await _client.SendIqAsync(iq);
+
+        
     }
 
     public async Task UploadGameTurn(GameInfoModel gameInfo, GameType type, string player)
@@ -97,7 +119,7 @@ public class PubSubManager
             Url = uploadUrl,
         };
 
-        await Publish(gameInfo.Id, XmppSerializer.ToXElement(gameTurn), "turns");
+        await Publish(gameInfo.Id, XmppSerializer.ToXElement(gameTurn));
     }
 
     private async Task<string> GetUploadUrl(string fileName, int length)
@@ -277,8 +299,14 @@ public class PubSubManager
         {
             Node = "game/" + node
         };
+        
+        affiliations.Add(new XmppDotNet.Xmpp.PubSub.Owner.Affiliation
+        {
+            Jid = _client.Jid,
+            AffiliationType = AffiliationType.Owner
+        });
 
-        foreach (var jid in jids)
+        foreach (var jid in jids.Where(j => j != _client.Jid))
         {
             affiliations.Add(new XmppDotNet.Xmpp.PubSub.Owner.Affiliation
             {
@@ -287,11 +315,13 @@ public class PubSubManager
             });
         }
 
+
         pubsub.Add(affiliations);
         iq.Add(pubsub);
 
-        await _client.SendIqAsync(iq);
+        var result = await _client.SendIqAsync(iq);
     }
+
 
     private async Task<List<string>> GetSubscriptions()
     {
@@ -369,12 +399,8 @@ public class PubSubManager
             Node = node,
             MaxItems = 1
         };
-        var metadataItem = new Item()
-        {
-            Id = "turns"
-        };
+      
 
-        items.Add(metadataItem);
         pubsub.Add(items);
 
         iq.Add(pubsub);
@@ -425,14 +451,17 @@ public class PubSubManager
             return null; // or throw
 
         // Step 3: deserialize
+        if (gameInfoElement.Name.LocalName == "GameTurnModel")
+        {
+            var serializer = new XmlSerializer(typeof(GameTurnModel));
+            using var reader = gameInfoElement.CreateReader();
+            var model = (GameTurnModel)serializer.Deserialize(reader);
 
-        var serializer = new XmlSerializer(typeof(GameTurnModel));
-        using var reader = gameInfoElement.CreateReader();
-        var model = (GameTurnModel)serializer.Deserialize(reader);
+            // model now contains your metadata
+            return model;
+        }
 
-        // model now contains your metadata
-        return model;
-
+        return null;
     }
     public async Task DeleteNode(string id)
     {
