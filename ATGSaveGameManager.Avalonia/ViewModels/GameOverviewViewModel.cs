@@ -47,7 +47,7 @@ namespace ATGSaveGameManager.ViewModel
             await _mainViewModel.Download(id);
         }
 
-        public void LoadGames(List<GameInfoModel> nodes)
+        public async Task LoadGames(List<GameInfoModel> nodes)
         {
             GameList.Clear();
 
@@ -71,12 +71,17 @@ namespace ATGSaveGameManager.ViewModel
                     gameInfoViewModel.IconImage = new Bitmap(gameType.Icon);
 
 
-                    // if (files.ContainsKey(info.FileName))
-                    // {
-                    //     gameInfoViewModel.File = files[info.FileName];
-                    // }
+                
 
                     GameList.Add(gameInfoViewModel);
+                    if(gameInfoViewModel.IsPlayer && !gameInfoViewModel.Model.Subscribed)
+                    {
+                        await _mainViewModel.SubscribeToNode(node.Id);
+                    }
+                    if (gameInfoViewModel.IsYourTurn)
+                    {
+                        await _mainViewModel.Download(node.Id);
+                    }
                 }
             }
         }

@@ -178,7 +178,7 @@ namespace ATGSaveGameManager.ViewModel
 
         private void LoadServerGames(List<GameInfoModel> listNodesAsync)
         {
-            Dispatcher.UIThread.InvokeAsync(() => { GameOverviewViewModel.LoadGames(listNodesAsync); });
+            Dispatcher.UIThread.InvokeAsync(async () => { await GameOverviewViewModel.LoadGames(listNodesAsync); });
 
         }
 
