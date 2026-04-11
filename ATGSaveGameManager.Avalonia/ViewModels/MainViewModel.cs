@@ -4,6 +4,7 @@ using ATGSaveGameManager.Configuration;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MsBox.Avalonia;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -92,21 +93,31 @@ namespace ATGSaveGameManager.ViewModel
 
         private async Task LoadAppSettings()
         {
-            //Status = "Loading settings";
-            ReadAppSettings();
+            try
+            {
+                //Status = "Loading settings";
+                ReadAppSettings();
 
-            Connection = await _secureStorage.RetrieveAsync(SecretName);
-            PlayerName = _appSettings.Player;
+                Connection = await _secureStorage.RetrieveAsync(SecretName);
+                PlayerName = _appSettings.Player;
 
-            GetGameTypes();
+                GetGameTypes();
 
-            CheckSettings();
+                CheckSettings();
 
-            SetupViewModel.SetCurrentSettings(_appSettings, Connection);
-            // GameOverviewViewModel.LoadGames();
-            
-            if (!string.IsNullOrWhiteSpace(_appSettings.Player) && !string.IsNullOrWhiteSpace(Connection))
-                await ConnectXmpp(_appSettings.Player, Connection);
+                SetupViewModel.SetCurrentSettings(_appSettings, Connection);
+                // GameOverviewViewModel.LoadGames();
+
+                if (!string.IsNullOrWhiteSpace(_appSettings.Player) && !string.IsNullOrWhiteSpace(Connection))
+                    await ConnectXmpp(_appSettings.Player, Connection);
+            }
+            catch (Exception ex)
+            {
+                await MessageBoxManager
+                              .GetMessageBoxStandard("Error", $"{ex.Message}\r\n{ex.StackTrace}")
+                              .ShowAsync();
+            }
+
         }
 
         private async Task ConnectXmpp(string jid, string password)

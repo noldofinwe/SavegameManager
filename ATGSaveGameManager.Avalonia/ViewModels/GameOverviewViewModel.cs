@@ -1,6 +1,8 @@
 ﻿using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MsBox.Avalonia;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -70,17 +72,23 @@ namespace ATGSaveGameManager.ViewModel
                     gameInfoViewModel.GameTypeObject = gameType;
                     gameInfoViewModel.IconImage = new Bitmap(gameType.Icon);
 
-
-                
-
                     GameList.Add(gameInfoViewModel);
-                    if(gameInfoViewModel.IsPlayer && !gameInfoViewModel.Model.Subscribed)
+                    try
                     {
-                        await _mainViewModel.SubscribeToNode(node.Id);
+                        if (gameInfoViewModel.IsPlayer && !gameInfoViewModel.Model.Subscribed)
+                        {
+                            await _mainViewModel.SubscribeToNode(node.Id);
+                        }
+                        if (gameInfoViewModel.IsYourTurn)
+                        {
+                            await _mainViewModel.Download(node.Id);
+                        }
                     }
-                    if (gameInfoViewModel.IsYourTurn)
+                    catch (Exception ex)
                     {
-                        await _mainViewModel.Download(node.Id);
+                        await MessageBoxManager
+                              .GetMessageBoxStandard("Error", $"{ex.Message}\r\n{ex.StackTrace}")
+                              .ShowAsync();
                     }
                 }
             }
