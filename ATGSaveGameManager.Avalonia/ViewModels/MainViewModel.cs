@@ -11,10 +11,12 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using XmppDotNet;
+using XmppDotNet.Extensions.Client.Message;
 using XmppDotNet.Extensions.Client.Presence;
 using XmppDotNet.Transport.Socket;
 using XmppDotNet.Xmpp;
@@ -52,7 +54,7 @@ namespace ATGSaveGameManager.ViewModel
 
         private const string _appsettingsName = "appsettings.json";
 
-        private readonly XmppClient _client;
+        private XmppClient _client;
         private PubSubManager _pubSubManager;
 
 
@@ -123,7 +125,7 @@ namespace ATGSaveGameManager.ViewModel
         private async Task ConnectXmpp(string jid, string password)
         {
             // setup XmppClient with some properties
-            var xmppClient = new XmppClient(
+            _client = new XmppClient(
                 conf =>
                 {
                     conf.UseSocketTransport();
@@ -140,9 +142,9 @@ namespace ATGSaveGameManager.ViewModel
                 Jid = jid,
                 Password = password
             };
-            _pubSubManager = new PubSubManager(xmppClient, "saves.bobbinhold.net");
+            _pubSubManager = new PubSubManager(_client, "saves.bobbinhold.net");
             // subscribe to the Binded session state
-            xmppClient
+            _client
                       .StateChanged
                       .Where(s => s == SessionState.Binded)
                       .Subscribe(async v =>
@@ -151,13 +153,13 @@ namespace ATGSaveGameManager.ViewModel
                           LoadServerGames(await _pubSubManager.ListNodesAsync());
                           Status = "Connected";
                           // send our online presence to the server
-                          await xmppClient.SendPresenceAsync(Show.Chat, "free for chat");
+                          await _client.SendPresenceAsync(Show.Chat, "free for chat");
 
                       });
 
             XNamespace nsPubSub = "http://jabber.org/protocol/pubsub#event";
 
-            xmppClient
+            _client
               .XmppXElementReceived
                 .Where(el => el is Message msg &&
                              msg.Element(nsPubSub + "event") != null)
@@ -183,7 +185,7 @@ namespace ATGSaveGameManager.ViewModel
                   });
             // connect so the server
             Status = "Connecting";
-            await xmppClient.ConnectAsync();
+            await _client.ConnectAsync();
 
         }
 
@@ -251,10 +253,7 @@ namespace ATGSaveGameManager.ViewModel
             {
                 GameTypes.Add(gametype);
             }
-
         }
-
-
 
         public async Task UpdateAppsettings(string selectedPlayerName, string selectedConnection, IEnumerable<GameType> gameTypes)
         {
@@ -288,10 +287,7 @@ namespace ATGSaveGameManager.ViewModel
                 await _pubSubManager.DownloadFile(game.Model, type);
                 game.Status = "Downloaded";
             }
-
-
         }
-
 
         internal async Task SubscribeToNode(string id)
         {
@@ -309,6 +305,10 @@ namespace ATGSaveGameManager.ViewModel
 
                 await _pubSubManager.UploadGameTurn(game.Model, type, game.NextPlayer);
                 game.Status = "Uploaded";
+                if(!string.IsNullOrWhiteSpace(game.Model.MucName))
+                {
+                    await _client.SendGroupChatMessageAsync(game.Model.MucName, $"Turn Done, next player is {game.NextPlayer}");
+                }
             }
         }
     }

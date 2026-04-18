@@ -15,6 +15,7 @@ namespace ATGSaveGameManager.ViewModel
         [ObservableProperty] private string _newGameName;
         [ObservableProperty] private string _newGameFileName;
         [ObservableProperty] private string _newGameAddPlayer;
+        [ObservableProperty] private string _newGameMucAdress;
         [ObservableProperty] private GameTypeViewModel _newGameGameType;
 
         public NewGameViewModel(MainViewModel mainViewModel) : base(mainViewModel)
@@ -30,6 +31,7 @@ namespace ATGSaveGameManager.ViewModel
                 FileName = Path.GetFileName(NewGameFileName),
                 GameType = NewGameGameType.Model.Extension,
                 Name = NewGameName,
+                MucName = NewGameMucAdress,
                 Id = Guid.NewGuid().ToString("N"),
                 Players = NewGamePlayers.ToArray()
             };
