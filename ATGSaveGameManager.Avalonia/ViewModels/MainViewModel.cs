@@ -307,7 +307,7 @@ namespace ATGSaveGameManager.ViewModel
                 game.Status = "Uploaded";
                 if(!string.IsNullOrWhiteSpace(game.Model.MucName))
                 {
-                    await _client.SendGroupChatMessageAsync(game.Model.MucName, $"Turn Done, next player is {game.NextPlayer}");
+                    await _client.SendGroupChatMessageAsync(game.Model.MucName, $"Turn Done, next player is {game.GetNextPlayer(game.NextPlayer)}");
                 }
             }
         }

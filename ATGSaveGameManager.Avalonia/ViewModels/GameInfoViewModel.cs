@@ -33,20 +33,26 @@ namespace ATGSaveGameManager.ViewModel
                 {
                     return "Unknown";
                 }
-                var list = Model.Players.ToList();
 
-                var index = list.IndexOf(Model.GameTurnModel.LastPlayer);
-
-                string next;
-                if (index + 1 < list.Count)
-                    next = list[index + 1];
-                else
-                {
-                    next = list[0];
-                }
-
-                return next;
+                return GetNextPlayer(Model.GameTurnModel.LastPlayer);
             }
+        }
+
+        public string GetNextPlayer(string player)
+        {
+            var list = Model.Players.ToList();
+
+            var index = list.IndexOf(player);
+
+            string next;
+            if (index + 1 < list.Count)
+                next = list[index + 1];
+            else
+            {
+                next = list[0];
+            }
+
+            return next;
         }
 
         [ObservableProperty]
